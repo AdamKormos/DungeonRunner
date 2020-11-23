@@ -10,12 +10,14 @@ public class MapManager : MonoBehaviour
     [SerializeField] GameObject roomSample = default;
     [SerializeField] GameObject doorSample = default;
     [SerializeField] GameObject wallSample = default;
+    [SerializeField] Sprite singleWall = default;
+    [SerializeField] Sprite multipleWall = default;
     public static Room[][] roomGrid { get; private set; }
     public static Room currentRoom { get; private set; } // = roomGrid[Player.currentRoomI][Player.currentRoomJ]
     public static Vector2 roomOffsets { get; private set; }
     //static Vector2 doorOffsetFromRoomCenter = new Vector2(0.0763f, 0.0664f);
-    static Vector2 doorOffsetFromRoomCenter = new Vector2(8.12f, 4.4f);
-    static Vector3 localVerticalWallScale = new Vector3(0.9237607f, 0.0571875f, 1f);
+    static Vector2 doorOffsetFromRoomCenter = new Vector2(8.08f, 4.4f);
+    static Vector3 localVerticalWallScale = new Vector3(0.1973228f, 0.04432031f, 1f);
     public static Vector2Int s_gridSize { get; private set; }
 
     private void Start()
@@ -318,25 +320,25 @@ public class MapManager : MonoBehaviour
     public void AddWallToRoom(int i, int j, Direction direction)
     {
         GameObject wall = Instantiate(wallSample, roomGrid[i][j].transform.position, Quaternion.identity, roomGrid[i][j].transform);
-        wall.transform.position += new Vector3(0f, 0f, -1f);
+        //wall.transform.localPosition += new Vector3(0f, 0f, -1f);
 
         switch (direction)
         {
             case Direction.Down:
-                wall.transform.position += new Vector3(0f, -doorOffsetFromRoomCenter.y - wallOffsetFromDoor, 0f);
+                wall.transform.localPosition = new Vector3(0.0061f, -0.0677f, -1f);// new Vector3(0.0044f, -doorOffsetFromRoomCenter.y - wallOffsetFromDoor, 0f);
                 wall.transform.Rotate(0f, 0f, 180f);
                 break;
             case Direction.Left:
-                wall.transform.position += new Vector3(-doorOffsetFromRoomCenter.x - wallOffsetFromDoor, 0f, 0f);
-                wall.transform.Rotate(0f, 0f, 270f);
+                wall.transform.localPosition = new Vector3(-0.0745f, -0.0035f, -1f);//new Vector3(-doorOffsetFromRoomCenter.x - wallOffsetFromDoor, 0.0042f, 0f);
+                wall.transform.Rotate(0f, 0f, 90f);
                 wall.transform.localScale = localVerticalWallScale;
                 break;
             case Direction.Up:
-                wall.transform.position += new Vector3(0f, doorOffsetFromRoomCenter.y + wallOffsetFromDoor, 0f);
+                wall.transform.localPosition = new Vector3(-0.0044f, 0.0691f, -1f);//doorOffsetFromRoomCenter.y + wallOffsetFromDoor, 0f);
                 break;
             case Direction.Right:
-                wall.transform.position += new Vector3(doorOffsetFromRoomCenter.x + wallOffsetFromDoor, 0f, 0f);
-                wall.transform.Rotate(0f, 0f, 90f);
+                wall.transform.localPosition = new Vector3(0.0745f, 0.0055f, -1f);//+= new Vector3(doorOffsetFromRoomCenter.x + wallOffsetFromDoor, 0.0042f, 0f);
+                wall.transform.Rotate(0f, 0f, 270);
                 wall.transform.localScale = localVerticalWallScale;
                 break;
         }
@@ -367,25 +369,8 @@ public class MapManager : MonoBehaviour
         //currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ];
     }
 
-    public static void ApplyCurrentRoomIndices(int calculatedI, int calculatedJ)
+    public static void ApplyCurrentRoomIndices()
     {
-        if (calculatedI < Player.currentRoomI)
-        {
-            Player.currentRoomI--;
-        }
-        else if (calculatedI > Player.currentRoomI)
-        {
-            Player.currentRoomI++;
-        }
-        else if (calculatedJ < Player.currentRoomJ)
-        {
-            Player.currentRoomJ--;
-        }
-        else if (calculatedJ > Player.currentRoomJ)
-        {
-            Player.currentRoomJ++;
-        }
-
         currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ];
     }
 }
