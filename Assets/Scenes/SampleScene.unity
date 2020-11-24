@@ -846,8 +846,10 @@ MonoBehaviour:
     type: 3}
   wallSample: {fileID: 5626451449532328426, guid: 8c8cfd41c666ca64e862fa34233254dd,
     type: 3}
-  singleWall: {fileID: 21300000, guid: a04f3d4a2ea1e6d4c86a0ebf6568d70d, type: 3}
-  multipleWall: {fileID: 21300000, guid: 260408a3c545db34fbb5b33b796df389, type: 3}
+  singleWalls:
+  - {fileID: 21300000, guid: a04f3d4a2ea1e6d4c86a0ebf6568d70d, type: 3}
+  multipleWalls:
+  - {fileID: 21300000, guid: 14c13bdcb1348484fb7434738fbf110a, type: 3}
 --- !u!4 &1232885683
 Transform:
   m_ObjectHideFlags: 0

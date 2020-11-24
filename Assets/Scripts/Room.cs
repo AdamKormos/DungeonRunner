@@ -53,4 +53,46 @@ public class Room : MonoBehaviour
         Destroy(GetDoorOfDirection(d).gameObject);
         doors[(int)d] = false;
     }
+
+    public void AssignWallSprites(Sprite singleSprite, Sprite multiSprite)
+    {
+        foreach (Wall w in GetComponentsInChildren<Wall>(true))
+        {
+            switch(w.direction)
+            {
+                case Direction.Up:
+                    if (!walls[2]) w.GetComponent<SpriteRenderer>().sprite = multiSprite;
+                    else if (!walls[3])
+                    {
+                        w.GetComponent<SpriteRenderer>().sprite = multiSprite;
+                        w.transform.Rotate(0f, 180f, 0f);
+                    }
+                    break;
+                case Direction.Down:
+                    if (!walls[3]) w.GetComponent<SpriteRenderer>().sprite = multiSprite;
+                    else if (!walls[2])
+                    {
+                        w.GetComponent<SpriteRenderer>().sprite = multiSprite;
+                        w.transform.Rotate(0f, 180f, 0f);
+                    }
+                    break;
+                case Direction.Right:
+                    if (!walls[1]) w.GetComponent<SpriteRenderer>().sprite = multiSprite;
+                    else if (!walls[0])
+                    {
+                        w.GetComponent<SpriteRenderer>().sprite = multiSprite;
+                        w.transform.Rotate(0f, 180f, 0f);
+                    }
+                    break;
+                case Direction.Left:
+                    if (!walls[0]) w.GetComponent<SpriteRenderer>().sprite = multiSprite;
+                    else if (!walls[1])
+                    {
+                        w.GetComponent<SpriteRenderer>().sprite = multiSprite;
+                        w.transform.Rotate(0f, 180f, 0f);
+                    }
+                    break;
+            }
+        }
+    }
 }

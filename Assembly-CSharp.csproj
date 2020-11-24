@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\MousePointer.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />
     <Compile Include="Assets\Scripts\Room.cs" />
+    <Compile Include="Assets\Scripts\Wall.cs" />
     <Compile Include="Assets\Scripts\Water.cs" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>D:/Unity/DungeonRunner/DungeonRunner/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>

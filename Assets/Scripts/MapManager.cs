@@ -10,13 +10,13 @@ public class MapManager : MonoBehaviour
     [SerializeField] GameObject roomSample = default;
     [SerializeField] GameObject doorSample = default;
     [SerializeField] GameObject wallSample = default;
-    [SerializeField] Sprite singleWall = default;
-    [SerializeField] Sprite multipleWall = default;
+    [SerializeField] Sprite[] singleWalls = default;
+    [SerializeField] Sprite[] multipleWalls = default;
     public static Room[][] roomGrid { get; private set; }
     public static Room currentRoom { get; private set; } // = roomGrid[Player.currentRoomI][Player.currentRoomJ]
     public static Vector2 roomOffsets { get; private set; }
     //static Vector2 doorOffsetFromRoomCenter = new Vector2(0.0763f, 0.0664f);
-    static Vector2 doorOffsetFromRoomCenter = new Vector2(8.08f, 4.4f);
+    static Vector2 doorOffsetFromRoomCenter = new Vector2(7.6f, 4.4f);
     static Vector3 localVerticalWallScale = new Vector3(0.1973228f, 0.04432031f, 1f);
     public static Vector2Int s_gridSize { get; private set; }
 
@@ -57,36 +57,53 @@ public class MapManager : MonoBehaviour
         }
         else
         {
-            LookForMerge();
+            FinalizeGrid();
+        }
+    }
 
-            for(int i = 0; i < inaccessibleCoords.Count; i++)
+    private void FinalizeGrid()
+    {
+        LookForMerge();
+
+        for (int i = 0; i < inaccessibleCoords.Count; i++)
+        {
+            int roomI = inaccessibleCoords[i].Item1, roomJ = inaccessibleCoords[i].Item2;
+            Room currentInaccessible = roomGrid[roomI][roomJ];
+
+            if (currentInaccessible != null)
             {
-                int roomI = inaccessibleCoords[i].Item1, roomJ = inaccessibleCoords[i].Item2;
-                Room currentInaccessible = roomGrid[roomI][roomJ];
+                if (currentInaccessible.doors[0]) roomGrid[roomI + 1][roomJ].RemoveDoor(Direction.Down);
+                if (currentInaccessible.doors[1]) roomGrid[roomI - 1][roomJ].RemoveDoor(Direction.Up);
+                if (currentInaccessible.doors[2]) roomGrid[roomI][roomJ + 1].RemoveDoor(Direction.Left);
+                if (currentInaccessible.doors[3]) roomGrid[roomI][roomJ - 1].RemoveDoor(Direction.Right);
 
-                if (currentInaccessible != null)
+                Destroy(currentInaccessible.gameObject);
+                roomGrid[roomI][roomJ] = null;
+            }
+        }
+
+        for (int i = 0; i < gridSize.y; i++)
+        {
+            for (int j = 0; j < gridSize.x; j++)
+            {
+                if (roomGrid[i][j] != null)
                 {
-                    if (currentInaccessible.doors[0]) roomGrid[roomI + 1][roomJ].RemoveDoor(Direction.Down);
-                    if (currentInaccessible.doors[1]) roomGrid[roomI - 1][roomJ].RemoveDoor(Direction.Up);
-                    if (currentInaccessible.doors[2]) roomGrid[roomI][roomJ + 1].RemoveDoor(Direction.Left);
-                    if (currentInaccessible.doors[3]) roomGrid[roomI][roomJ - 1].RemoveDoor(Direction.Right);
-
-                    Destroy(currentInaccessible.gameObject);
-                    roomGrid[roomI][roomJ] = null;
+                    for (int k = 0; k < 4; k++)
+                    {
+                        if (roomGrid[i][j].walls[k]) AddWallToRoom(i, j, (Direction)k);
+                    }
                 }
             }
+        }
 
-            for (int i = 0; i < gridSize.y; i++)
+        for (int i = 0; i < gridSize.y; i++)
+        {
+            for (int j = 0; j < gridSize.x; j++)
             {
-                for (int j = 0; j < gridSize.x; j++)
+                if (roomGrid[i][j] != null)
                 {
-                    if (roomGrid[i][j] != null)
-                    {
-                        for (int k = 0; k < 4; k++)
-                        {
-                            if(roomGrid[i][j].walls[k]) AddWallToRoom(i, j, (Direction)k);
-                        }
-                    }
+                    int randNum = Random.Range(0, singleWalls.Length);
+                    roomGrid[i][j].AssignWallSprites(singleWalls[randNum], multipleWalls[randNum]);
                 }
             }
         }
@@ -320,6 +337,7 @@ public class MapManager : MonoBehaviour
     public void AddWallToRoom(int i, int j, Direction direction)
     {
         GameObject wall = Instantiate(wallSample, roomGrid[i][j].transform.position, Quaternion.identity, roomGrid[i][j].transform);
+        wall.GetComponent<Wall>().direction = direction;
         //wall.transform.localPosition += new Vector3(0f, 0f, -1f);
 
         switch (direction)
@@ -329,15 +347,15 @@ public class MapManager : MonoBehaviour
                 wall.transform.Rotate(0f, 0f, 180f);
                 break;
             case Direction.Left:
-                wall.transform.localPosition = new Vector3(-0.0745f, -0.0035f, -1f);//new Vector3(-doorOffsetFromRoomCenter.x - wallOffsetFromDoor, 0.0042f, 0f);
+                wall.transform.localPosition = new Vector3(-0.0715f, -0.0035f, -1f);//new Vector3(-doorOffsetFromRoomCenter.x - wallOffsetFromDoor, 0.0042f, 0f);
                 wall.transform.Rotate(0f, 0f, 90f);
                 wall.transform.localScale = localVerticalWallScale;
                 break;
             case Direction.Up:
-                wall.transform.localPosition = new Vector3(-0.0044f, 0.0691f, -1f);//doorOffsetFromRoomCenter.y + wallOffsetFromDoor, 0f);
+                wall.transform.localPosition = new Vector3(-0.0061f, 0.0691f, -1f);//doorOffsetFromRoomCenter.y + wallOffsetFromDoor, 0f);
                 break;
             case Direction.Right:
-                wall.transform.localPosition = new Vector3(0.0745f, 0.0055f, -1f);//+= new Vector3(doorOffsetFromRoomCenter.x + wallOffsetFromDoor, 0.0042f, 0f);
+                wall.transform.localPosition = new Vector3(0.0715f, 0.0055f, -1f);//+= new Vector3(doorOffsetFromRoomCenter.x + wallOffsetFromDoor, 0.0042f, 0f);
                 wall.transform.Rotate(0f, 0f, 270);
                 wall.transform.localScale = localVerticalWallScale;
                 break;
