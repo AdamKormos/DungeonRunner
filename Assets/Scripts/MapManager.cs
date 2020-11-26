@@ -12,16 +12,20 @@ public class MapManager : MonoBehaviour
     [SerializeField] GameObject wallSample = default;
     [SerializeField] Sprite[] singleWalls = default;
     [SerializeField] Sprite[] multipleWalls = default;
+    [SerializeField] Puzzle[] puzzles = default;
+    [SerializeField] Sprite[] jigsawPieceSprites = default;
     public static Room[][] roomGrid { get; private set; }
     public static Room currentRoom { get; private set; } // = roomGrid[Player.currentRoomI][Player.currentRoomJ]
     public static Vector2 roomOffsets { get; private set; }
     //static Vector2 doorOffsetFromRoomCenter = new Vector2(0.0763f, 0.0664f);
-    static Vector2 doorOffsetFromRoomCenter = new Vector2(7.6f, 4.4f);
+    static Vector2 doorOffsetFromRoomCenter = new Vector2(7.9f, 4.4f);
     static Vector3 localVerticalWallScale = new Vector3(0.1973228f, 0.04432031f, 1f);
     public static Vector2Int s_gridSize { get; private set; }
+    public static Sprite[] s_jigsawPieceSprites { get; private set; }
 
     private void Start()
     {
+        s_jigsawPieceSprites = jigsawPieceSprites;
         s_gridSize = gridSize;
         roomOffsets = new Vector2(Camera.main.orthographicSize * Camera.main.aspect, Camera.main.orthographicSize) * 2f;
 
@@ -37,7 +41,7 @@ public class MapManager : MonoBehaviour
 
     private void Update()
     {
-        currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ];
+        currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ]; // Set z to -8f
     }
 
     private void LayoutInit()
@@ -58,7 +62,55 @@ public class MapManager : MonoBehaviour
         else
         {
             FinalizeGrid();
+            //ShufflePuzzleSelection();
+            GeneratePuzzles();
         }
+    }
+
+    /// <summary>
+    /// Shuffles the puzzle list so that out of all, not the first four will always spawn.
+    /// </summary>
+    private void ShufflePuzzleSelection()
+    {
+        for(int i = 0; i < puzzles.Length-1; i++)
+        {
+            if(Random.Range(0, 100) < 30)
+            {
+                Puzzle tmp = puzzles[i];
+                puzzles[Random.Range(i + 1, puzzles.Length)] = tmp;
+                puzzles[i] = tmp;
+            }
+        }
+    }
+
+    private void GeneratePuzzles()
+    {
+        for(int i = 0; i < 4 && i < puzzles.Length; i++)
+        {
+            puzzles[i].transform.position = AssignPuzzleToGrid();
+            Puzzle.jigsawPieceDict[puzzles[i]] = (JigsawPosition)(i);
+            puzzles[i].SpawnPuzzleComponents();
+        }
+    }
+
+    /// <summary>
+    /// Reserves a position in the grid to be used by a certain puzzle.
+    /// </summary>
+    /// <returns>The reserved room's, and therefore the puzzle's/puzzle component's new position</returns>
+    public static Vector3 AssignPuzzleToGrid()
+    {
+        Vector2 newTilePos = new Vector2();
+        int randI, randJ;
+        do
+        {
+            randI = Random.Range(0, s_gridSize.y);
+            randJ = Random.Range(0, s_gridSize.x);
+            if(roomGrid[randI][randJ] != null) newTilePos = roomGrid[randI][randJ].transform.position;
+        } while (roomGrid[randI][randJ] == null || (roomGrid[randI][randJ] != null && roomGrid[randI][randJ].containsPuzzle));
+
+        PositionToRoom(newTilePos).containsPuzzle = true;
+        //Debug.Log("Successfully placed puzzle");
+        return new Vector3(newTilePos.x, newTilePos.y, -8.5f);
     }
 
     private void FinalizeGrid()
@@ -92,18 +144,7 @@ public class MapManager : MonoBehaviour
                     {
                         if (roomGrid[i][j].walls[k]) AddWallToRoom(i, j, (Direction)k);
                     }
-                }
-            }
-        }
-
-        for (int i = 0; i < gridSize.y; i++)
-        {
-            for (int j = 0; j < gridSize.x; j++)
-            {
-                if (roomGrid[i][j] != null)
-                {
-                    int randNum = Random.Range(0, singleWalls.Length);
-                    roomGrid[i][j].AssignWallSprites(singleWalls[randNum], multipleWalls[randNum]);
+                    roomGrid[i][j].SetMultiWalls(multipleWalls[Random.Range(0, multipleWalls.Length)]);
                 }
             }
         }
@@ -136,8 +177,10 @@ public class MapManager : MonoBehaviour
                 mergeAttemptRoomCoords = new Tuple<int, int>(i, j - 1);
             }
 
-            if (mergeAttemptRoomCoords.Item1 < 0 || mergeAttemptRoomCoords.Item2 < 0 || mergeAttemptRoomCoords.Item1 >= gridSize.y || mergeAttemptRoomCoords.Item2 >= gridSize.x) return;
+            if (roomGrid[i][j].blockCount > 3 || mergeAttemptRoomCoords.Item1 < 0 || mergeAttemptRoomCoords.Item2 < 0 || mergeAttemptRoomCoords.Item1 >= gridSize.y || mergeAttemptRoomCoords.Item2 >= gridSize.x) return;
             
+            //Debug.Log(roomGrid[i][j].blockCount);
+
             Room mergeAttemptRoom = roomGrid[mergeAttemptRoomCoords.Item1][mergeAttemptRoomCoords.Item2];
 
             if (mergeAttemptRoom != null)
@@ -173,7 +216,7 @@ public class MapManager : MonoBehaviour
 
                     inaccessibleCoords.Remove(new Tuple<int, int>(mergeAttemptRoomCoords.Item1, mergeAttemptRoomCoords.Item2));
 
-                    if (roomGrid[i][j].blockCount < 3 && mergeAttemptRoom.blockCount == 1 && Random.Range(0, 100) < 50)
+                    if (roomGrid[i][j].blockCount < 3 && Random.Range(0, 100) < 50)
                     {
                         SeekForMerge(mergeAttemptRoomCoords.Item1, mergeAttemptRoomCoords.Item2);
                     }
@@ -232,25 +275,10 @@ public class MapManager : MonoBehaviour
     {
         keepRooms[roomI][roomJ] = true;
 
-        if(roomGrid[roomI][roomJ].doors[1] && !keepRooms[roomI-1][roomJ])
-        {
-            TraverseAdjacents(roomI - 1, roomJ);
-        }
-
-        if (roomGrid[roomI][roomJ].doors[0] && !keepRooms[roomI + 1][roomJ])
-        {
-            TraverseAdjacents(roomI + 1, roomJ);
-        }
-
-        if (roomGrid[roomI][roomJ].doors[3] && !keepRooms[roomI][roomJ - 1])
-        {
-            TraverseAdjacents(roomI, roomJ - 1);
-        }
-
-        if (roomGrid[roomI][roomJ].doors[2] && !keepRooms[roomI][roomJ + 1])
-        {
-            TraverseAdjacents(roomI, roomJ + 1);
-        }
+        if(roomGrid[roomI][roomJ].doors[1] && !keepRooms[roomI-1][roomJ]) TraverseAdjacents(roomI - 1, roomJ);
+        if (roomGrid[roomI][roomJ].doors[0] && !keepRooms[roomI + 1][roomJ]) TraverseAdjacents(roomI + 1, roomJ);
+        if (roomGrid[roomI][roomJ].doors[3] && !keepRooms[roomI][roomJ - 1]) TraverseAdjacents(roomI, roomJ - 1);
+        if (roomGrid[roomI][roomJ].doors[2] && !keepRooms[roomI][roomJ + 1]) TraverseAdjacents(roomI, roomJ + 1);
     }
 
     private void GenerateLayout(int height, int width)
@@ -310,7 +338,7 @@ public class MapManager : MonoBehaviour
     {
         GameObject door = Instantiate(doorSample, roomGrid[i][j].transform.position, Quaternion.identity, roomGrid[i][j].transform);
         door.GetComponent<Door>().doorDirection = direction;
-        door.transform.position += new Vector3(0f, 0f, -2f);
+        door.transform.position += new Vector3(0f, 0f, -1f);
 
         switch (direction)
         {
@@ -320,14 +348,14 @@ public class MapManager : MonoBehaviour
                 break;
             case Direction.Left:
                 door.transform.position += new Vector3(-doorOffsetFromRoomCenter.x, 0f, 0f);
-                door.transform.Rotate(0f, 0f, 270f);
+                door.transform.Rotate(0f, 0f, 90f);
                 break;
             case Direction.Up:
                 door.transform.position += new Vector3(0f, doorOffsetFromRoomCenter.y, 0f);
                 break;
             case Direction.Right:
                 door.transform.position += new Vector3(doorOffsetFromRoomCenter.x, 0f, 0f);
-                door.transform.Rotate(0f, 0f, 90f);
+                door.transform.Rotate(0f, 0f, 270f);
                 break;
         }
     }
@@ -338,6 +366,7 @@ public class MapManager : MonoBehaviour
     {
         GameObject wall = Instantiate(wallSample, roomGrid[i][j].transform.position, Quaternion.identity, roomGrid[i][j].transform);
         wall.GetComponent<Wall>().direction = direction;
+        wall.GetComponent<SpriteRenderer>().sprite = singleWalls[Random.Range(0, singleWalls.Length)];
         //wall.transform.localPosition += new Vector3(0f, 0f, -1f);
 
         switch (direction)
@@ -352,7 +381,7 @@ public class MapManager : MonoBehaviour
                 wall.transform.localScale = localVerticalWallScale;
                 break;
             case Direction.Up:
-                wall.transform.localPosition = new Vector3(-0.0061f, 0.0691f, -1f);//doorOffsetFromRoomCenter.y + wallOffsetFromDoor, 0f);
+                wall.transform.localPosition = new Vector3(-0.0061f, 0.0677f, -1f);//doorOffsetFromRoomCenter.y + wallOffsetFromDoor, 0f);
                 break;
             case Direction.Right:
                 wall.transform.localPosition = new Vector3(0.0715f, 0.0055f, -1f);//+= new Vector3(doorOffsetFromRoomCenter.x + wallOffsetFromDoor, 0.0042f, 0f);
@@ -390,5 +419,27 @@ public class MapManager : MonoBehaviour
     public static void ApplyCurrentRoomIndices()
     {
         currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ];
+    }
+
+    public static int GetDistanceBetweenRoomsByPosition(Room a, Room b)
+    {
+        return Mathf.Abs(((int)Mathf.Round(a.transform.position.y / roomOffsets.y) - (int)Mathf.Round(a.transform.position.y / roomOffsets.y))) +
+            Mathf.Abs(((int)Mathf.Round(b.transform.position.x / roomOffsets.x) - (int)Mathf.Round(b.transform.position.x / roomOffsets.x)));
+    }
+
+    public static Tuple<int, int> PositionToGridPosition(Vector2 pos)
+    {
+        return new Tuple<int, int>((int)Mathf.Round(pos.y / roomOffsets.y), (int)Mathf.Round(pos.x / roomOffsets.x));
+    }
+
+    public static Vector2 GridPositionToPosition(int i, int j)
+    {
+        return new Vector2(j * roomOffsets.x, i * roomOffsets.y);
+    }
+
+    public static Room PositionToRoom(Vector2 pos)
+    {
+        Tuple<int, int> coords = PositionToGridPosition(pos);
+        return roomGrid[coords.Item1][coords.Item2];
     }
 }

@@ -14,14 +14,30 @@ public class Player : MonoBehaviour
     public static Vector2 cameraResolutionBounds { get; private set; }
     public static int currentRoomI, currentRoomJ, previousRoomI, previousRoomJ;
     bool isReloadingStamina = false, checksForDoorTrigger = true;
+    public static List<JigsawPiece> collectedPieces { get; private set; }
 
     // Start is called before the first frame update
     void Start()
     {
-        transform.position = new Vector3(MapManager.currentRoom.transform.position.x, MapManager.currentRoom.transform.position.y, -6f);
+        //Bound2D b = new Bound2D(-1, 4, 2, 6);
+        //b.GetIntersection(new Bound2D(1, 5, -1, 3));
+        collectedPieces = new List<JigsawPiece>();
+        transform.position = new Vector3(MapManager.currentRoom.transform.position.x, MapManager.currentRoom.transform.position.y, -9f);
         rigidbody = GetComponent<Rigidbody2D>();
         cameraResolutionBounds = new Vector2(Camera.main.orthographicSize * Camera.main.aspect, Camera.main.orthographicSize);
         StartCoroutine(HandleStamina());
+        OnDoorLeave();
+    }
+
+    IEnumerator A()
+    {
+        yield return new WaitForEndOfFrame();
+        JigsawPiece obj = FindObjectOfType<JigsawPiece>();
+        collectedPieces.Add(obj);
+        obj.transform.parent = this.transform;
+        obj.transform.localPosition = Vector2.zero;
+        obj.GetComponent<BoxCollider2D>().enabled = false;
+        obj.GetComponent<SpriteRenderer>().enabled = false;
     }
 
     // Update is called once per frame
@@ -30,15 +46,11 @@ public class Player : MonoBehaviour
         currentRoomI = (int)Mathf.Round(transform.position.y / MapManager.roomOffsets.y);
         currentRoomJ = (int)Mathf.Round(transform.position.x / MapManager.roomOffsets.x);
 
+        //if (Input.GetKeyDown(KeyCode.Space)) StartCoroutine(A());
+
         //Debug.Log(MapManager.currentRoom.blockCount);
         FollowMouseMovement();
         DetermineCameraMovement();
-
-        if (currentRoomI != previousRoomI || currentRoomJ != previousRoomJ)
-        {
-            previousRoomI = currentRoomI;
-            previousRoomJ = currentRoomJ;
-        }
     }
 
     private IEnumerator HandleStamina()
@@ -86,12 +98,7 @@ public class Player : MonoBehaviour
 
             if (MapManager.currentRoom.blockCount == 2)
             {
-                cameraPosXBounds = new Vector2(
-                    MapManager.currentRoom.walls[3] ? Camera.main.transform.position.x : Mathf.NegativeInfinity,
-                    MapManager.currentRoom.walls[2] ? Camera.main.transform.position.x : Mathf.Infinity);
-                cameraPosYBounds = new Vector2(
-                    MapManager.currentRoom.walls[1] ? Camera.main.transform.position.y : Mathf.NegativeInfinity,
-                    MapManager.currentRoom.walls[0] ? Camera.main.transform.position.y : Mathf.Infinity);
+                MultiRoomCameraBoundClamp();
 
                 TransferCamera(new Vector3(
                 Mathf.Clamp(transform.position.x, cameraPosXBounds.x, cameraPosXBounds.y),
@@ -99,14 +106,9 @@ public class Player : MonoBehaviour
             }
             else
             {
-                cameraPosXBounds = new Vector2(
-                       MapManager.currentRoom.walls[3] ? Camera.main.transform.position.x : Mathf.NegativeInfinity,
-                       MapManager.currentRoom.walls[2] ? Camera.main.transform.position.x : Mathf.Infinity);
-                cameraPosYBounds = new Vector2(
-                    MapManager.currentRoom.walls[1] ? Camera.main.transform.position.y : Mathf.NegativeInfinity,
-                    MapManager.currentRoom.walls[0] ? Camera.main.transform.position.y : Mathf.Infinity);
+                MultiRoomCameraBoundClamp();
 
-                if(MapManager.currentRoom.walls[0] || MapManager.currentRoom.walls[1])
+                if((MapManager.currentRoom.walls[0] || MapManager.currentRoom.walls[1]) && !(MapManager.currentRoom.walls[2] && MapManager.currentRoom.walls[3]) && !(MapManager.currentRoom.walls[0] && MapManager.currentRoom.walls[1]))
                 {
                     cameraPosXBounds = new Vector2(MapManager.currentRoom.transform.position.x, MapManager.currentRoom.transform.position.x);
                 }
@@ -123,16 +125,22 @@ public class Player : MonoBehaviour
                 TransferCamera(new Vector3(
                 Mathf.Clamp(transform.position.x, cameraPosXBounds.x, cameraPosXBounds.y),
                 Mathf.Clamp(transform.position.y, cameraPosYBounds.x, cameraPosYBounds.y)), 100);
-
             }
-
-
-           
         }
         else
         {
             Camera.main.transform.position = new Vector3(MapManager.currentRoom.transform.position.x, MapManager.currentRoom.transform.position.y, Camera.main.transform.position.z);
         }
+    }
+
+    private void MultiRoomCameraBoundClamp()
+    {
+        cameraPosXBounds = new Vector2(
+            MapManager.currentRoom.walls[3] ? Camera.main.transform.position.x : Mathf.NegativeInfinity,
+            MapManager.currentRoom.walls[2] ? Camera.main.transform.position.x : Mathf.Infinity);
+        cameraPosYBounds = new Vector2(
+            MapManager.currentRoom.walls[1] ? Camera.main.transform.position.y : Mathf.NegativeInfinity,
+            MapManager.currentRoom.walls[0] ? Camera.main.transform.position.y : Mathf.Infinity);
     }
 
     private void FollowMouseMovement()
@@ -146,11 +154,8 @@ public class Player : MonoBehaviour
     {
         if (checksForDoorTrigger && collision.GetComponent<Door>())
         {
-            //collision.GetComponent<Door>().OnPlayerEnter();
-            Debug.Log(collision.GetComponent<Door>().doorDirection);
+            OnDoorEnter();
             MapManager.OnRoomChange(collision.GetComponent<Door>().doorDirection);
-
-            //Debug.Log(MapManager.currentRoom.blockCount);
             StartCoroutine(DoorTriggerCheckCooldown());
 
             rigidbody.Sleep();
@@ -158,15 +163,39 @@ public class Player : MonoBehaviour
             rigidbody.WakeUp();
             rigidbody.velocity = Vector2.zero;
 
-            collision.GetComponent<Door>().OnPlayerEnter();
+            OnDoorLeave();
             MousePointer.instance.transform.position = new Vector3(transform.position.x + transform.forward.x, transform.position.y + transform.forward.y, MousePointer.instance.transform.position.z);
-            //StartCoroutine(DoorTriggerCheckCooldown());
         }
         else if(collision.GetComponent<Water>())
         {
             StartCoroutine(ReloadStamina());
             Debug.Log("P");
         }
+        else if(collision.GetComponent<JigsawPiece>())
+        {
+            collectedPieces.Add(collision.GetComponent<JigsawPiece>());
+            collision.transform.parent = this.transform;
+            collision.transform.localPosition = Vector2.zero;
+            collision.GetComponent<BoxCollider2D>().enabled = false;
+            collision.GetComponent<SpriteRenderer>().enabled = false;
+        }
+        else if(collision.GetComponent<MemoryTile>())
+        {
+            collision.GetComponent<MemoryTile>().OnPlayerEnter();
+        }
+        else if(collision.tag.Equals("MemoryGridSubmitTile"))
+        {
+            StartCoroutine(TogglePuzzleBool_MemoryGrid());
+        }
+    }
+
+    public static bool enteredMemoryGridPuzzle { get; private set; }
+
+    private IEnumerator TogglePuzzleBool_MemoryGrid()
+    {
+        enteredMemoryGridPuzzle = true;
+        yield return new WaitForEndOfFrame();
+        enteredMemoryGridPuzzle = false;
     }
 
     private IEnumerator DoorTriggerCheckCooldown()
@@ -174,6 +203,47 @@ public class Player : MonoBehaviour
         checksForDoorTrigger = false;
         yield return new WaitForSeconds(0.5f);
         checksForDoorTrigger = true;
+    }
+
+    List<Room> currentRooms = new List<Room>();
+
+    private void OnDoorEnter()
+    {
+        foreach(Room r in currentRooms)
+        {
+            r.transform.position = new Vector3(r.transform.position.x, r.transform.position.y, -5f);
+        }
+
+        previousRoomI = currentRoomI;
+        previousRoomJ = currentRoomJ;
+    }
+
+    private void OnDoorLeave()
+    {
+        SetCurrentRooms();
+        //Debug.Log(currentRooms.Count);
+        foreach (Room r in currentRooms)
+        {
+            r.transform.position = new Vector3(r.transform.position.x, r.transform.position.y, -8f);
+        }
+    }
+
+    private void SetCurrentRooms()
+    {
+        currentRooms.Clear();
+        currentRoomI = (int)Mathf.Round(transform.position.y / MapManager.roomOffsets.y);
+        currentRoomJ = (int)Mathf.Round(transform.position.x / MapManager.roomOffsets.x);
+
+        CollectCurrentRooms(currentRoomI, currentRoomJ);
+    }
+
+    private void CollectCurrentRooms(int fromI, int fromJ)
+    {
+        currentRooms.Add(MapManager.roomGrid[fromI][fromJ]);
+        if (!MapManager.roomGrid[fromI][fromJ].walls[0] && !currentRooms.Contains(MapManager.roomGrid[fromI + 1][fromJ])) CollectCurrentRooms(fromI + 1, fromJ);
+        if (!MapManager.roomGrid[fromI][fromJ].walls[1] && !currentRooms.Contains(MapManager.roomGrid[fromI - 1][fromJ])) CollectCurrentRooms(fromI - 1, fromJ);
+        if (!MapManager.roomGrid[fromI][fromJ].walls[2] && !currentRooms.Contains(MapManager.roomGrid[fromI][fromJ + 1])) CollectCurrentRooms(fromI, fromJ + 1);
+        if (!MapManager.roomGrid[fromI][fromJ].walls[3] && !currentRooms.Contains(MapManager.roomGrid[fromI][fromJ - 1])) CollectCurrentRooms(fromI, fromJ - 1);
     }
 
     private void TransferCamera(Vector2 destination, int tickAmount)

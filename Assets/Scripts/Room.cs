@@ -9,7 +9,7 @@ using UnityEngine;
 public class Room : MonoBehaviour
 {
     [SerializeField] public int blockCount = 1;
-    //[HideInInspector] public int roomID = 0; // To determine which room set this room belongs to
+    public bool containsPuzzle = false;
 
     /// <summary>
     /// up, down, right, left
@@ -39,6 +39,11 @@ public class Room : MonoBehaviour
 
     public bool HasAnyDoors() { return doors[0] || doors[1] || doors[2] || doors[3]; }
 
+    /// <summary>
+    /// Gets the door of the given direction.
+    /// </summary>
+    /// <param name="d"></param>
+    /// <returns></returns>
     public Door GetDoorOfDirection(Direction d)
     {
         foreach(Door door in GetComponentsInChildren<Door>(true))
@@ -48,13 +53,21 @@ public class Room : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Removes a door from the given direction.
+    /// </summary>
+    /// <param name="d"></param>
     public void RemoveDoor(Direction d)
     {
         Destroy(GetDoorOfDirection(d).gameObject);
         doors[(int)d] = false;
     }
 
-    public void AssignWallSprites(Sprite singleSprite, Sprite multiSprite)
+    /// <summary>
+    /// Sets multiwalls where needed.
+    /// </summary>
+    /// <param name="multiSprite"></param>
+    public void SetMultiWalls(Sprite multiSprite)
     {
         foreach (Wall w in GetComponentsInChildren<Wall>(true))
         {
