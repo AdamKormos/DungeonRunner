@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Bound.cs" />
+    <Compile Include="Assets\Scripts\ClockPuzzle.cs" />
     <Compile Include="Assets\Scripts\Door.cs" />
     <Compile Include="Assets\Scripts\Jigsaw.cs" />
     <Compile Include="Assets\Scripts\JigsawPiece.cs" />
@@ -72,9 +73,12 @@
     <Compile Include="Assets\Scripts\MemoryGrid.cs" />
     <Compile Include="Assets\Scripts\MemoryTile.cs" />
     <Compile Include="Assets\Scripts\MousePointer.cs" />
+    <Compile Include="Assets\Scripts\MusicPuzzle.cs" />
+    <Compile Include="Assets\Scripts\MusicTile.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />
     <Compile Include="Assets\Scripts\Puzzle.cs" />
     <Compile Include="Assets\Scripts\Room.cs" />
+    <Compile Include="Assets\Scripts\SwitchPuzzle.cs" />
     <Compile Include="Assets\Scripts\Wall.cs" />
     <Compile Include="Assets\Scripts\Water.cs" />
     <Reference Include="Unity.Timeline.Editor">

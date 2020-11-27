@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MemoryGrid : MonoBehaviour
+public class MemoryGrid : Puzzle
 {
     [SerializeField] MemoryTile sampleTileObject = default;
     [SerializeField] Transform jigsawPieceTransform = default;
@@ -19,6 +19,8 @@ public class MemoryGrid : MonoBehaviour
         offsetBetweenTiles = sampleTileObject.GetComponent<SpriteRenderer>().bounds.size;
         PickRedTileCoords();
         GenerateGrid();
+
+        //OnCorrectAnswer();
     }
 
     private void Update()
@@ -87,16 +89,19 @@ public class MemoryGrid : MonoBehaviour
         //Debug.Log("(" + redTileI + ", " + redTileJ + ")");
     }
 
-    private void OnAnswerSubmitted()
+    /// <summary>
+    /// Called when an answer was submitted. If the answer matches with the correct solution, OnCorrectAnswer() will be called.
+    /// </summary>
+    protected override void OnAnswerSubmitted()
     {
         MemoryTile[] tiles = GetComponentsInChildren<MemoryTile>(true);
-        for(int i = 0; i < tiles.Length; i++)
+        for (int i = 0; i < tiles.Length; i++)
         {
             if (solutionList[i] != tiles[i].spriteRenderer.color && tiles[i].spriteRenderer.color != Color.red)
             {
-                for(int j = 0; j < tiles.Length; j++)
+                for (int j = 0; j < tiles.Length; j++)
                 {
-                    if(tiles[j].spriteRenderer.color != Color.red)
+                    if (tiles[j].spriteRenderer.color != Color.red)
                     {
                         tiles[j].spriteRenderer.color = (UnityEngine.Random.Range(0, 2) == 0 ? Color.white : Color.black);
                     }
@@ -105,9 +110,17 @@ public class MemoryGrid : MonoBehaviour
             }
         }
 
+        OnCorrectAnswer();
+    }
+
+    /// <summary>
+    /// Sets this puzzle completed and spawns the jigsaw piece that was assigned to this puzzle.
+    /// </summary>
+    protected override void OnCorrectAnswer()
+    {
         isCompleted = true;
 
-        JigsawPosition jigsawPosition = Puzzle.jigsawPieceDict[this.GetComponentInParent<Puzzle>()];
+        JigsawPosition jigsawPosition = Puzzle.jigsawPieceDict[this];
         JigsawPiece jigsawPiece = jigsawPieceTransform.gameObject.AddComponent<JigsawPiece>();
 
         BoxCollider2D boxCollider = jigsawPieceTransform.gameObject.AddComponent<BoxCollider2D>();

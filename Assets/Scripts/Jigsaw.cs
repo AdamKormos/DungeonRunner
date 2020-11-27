@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Jigsaw : MonoBehaviour
+public class Jigsaw : Puzzle
 {
     bool[] insertedPieces = new bool[4];
 
@@ -16,7 +16,7 @@ public class Jigsaw : MonoBehaviour
                 {
                     Vector2 distance = jigsawPieceHolder.transform.position - jigsawPiece.transform.position;
 
-                    //Debug.Log("Go");
+                    Debug.Log("Go");
                     StartCoroutine(InsertPiece(jigsawPiece, distance));
                     insertedPieces[(int)jigsawPiece.jigsawPosition] = true;
                 }
@@ -24,14 +24,20 @@ public class Jigsaw : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Inserts a jigsaw piece from the player's inventory to the piece holder it's supposed to be at. The piece transfers smoothly.
+    /// </summary>
+    /// <param name="jigsawPiece"></param>
+    /// <param name="distance"></param>
+    /// <returns></returns>
     private IEnumerator InsertPiece(JigsawPiece jigsawPiece, Vector2 distance)
     {
         jigsawPiece.transform.parent = this.transform;
         jigsawPiece.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
         jigsawPiece.GetComponent<SpriteRenderer>().enabled = true;
         
-        Vector3 distancePerTick = distance / 100f;
-        Vector3 scalePerTick = (new Vector3(1f, 1f) - jigsawPiece.transform.localScale) / 100f;
+        Vector3 distancePerTick = distance / 250f;
+        Vector3 scalePerTick = (new Vector3(1f, 1f) - jigsawPiece.transform.localScale) / 250f;
 
         for (int i = 0; i < 250; i++)
         {

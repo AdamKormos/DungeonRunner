@@ -15,6 +15,7 @@ public class Player : MonoBehaviour
     public static int currentRoomI, currentRoomJ, previousRoomI, previousRoomJ;
     bool isReloadingStamina = false, checksForDoorTrigger = true;
     public static List<JigsawPiece> collectedPieces { get; private set; }
+    List<Room> currentRooms = new List<Room>();
 
     // Start is called before the first frame update
     void Start()
@@ -27,8 +28,14 @@ public class Player : MonoBehaviour
         cameraResolutionBounds = new Vector2(Camera.main.orthographicSize * Camera.main.aspect, Camera.main.orthographicSize);
         StartCoroutine(HandleStamina());
         OnDoorLeave();
+
+        //StartCoroutine(A());
     }
 
+    /// <summary>
+    /// Debug method to automatically assign a jigsaw piece (spawned with a debug method too, which is already deleted).
+    /// </summary>
+    /// <returns></returns>
     IEnumerator A()
     {
         yield return new WaitForEndOfFrame();
@@ -90,24 +97,24 @@ public class Player : MonoBehaviour
     Vector2 cameraPosXBounds = new Vector2(Mathf.NegativeInfinity, Mathf.Infinity);
     Vector2 cameraPosYBounds = new Vector2(Mathf.NegativeInfinity, Mathf.Infinity);
 
+    /// <summary>
+    /// Controls the camera movement. Potentially can be heavily optimized.
+    /// </summary>
     private void DetermineCameraMovement()
     {
         if (MapManager.currentRoom.blockCount > 1)
         {
             TransferCamera(MapManager.currentRoom.transform.position, 100);
+            MultiRoomCameraBoundClamp();
 
             if (MapManager.currentRoom.blockCount == 2)
             {
-                MultiRoomCameraBoundClamp();
-
                 TransferCamera(new Vector3(
                 Mathf.Clamp(transform.position.x, cameraPosXBounds.x, cameraPosXBounds.y),
                 Mathf.Clamp(transform.position.y, cameraPosYBounds.x, cameraPosYBounds.y)), 100);
             }
             else
             {
-                MultiRoomCameraBoundClamp();
-
                 if((MapManager.currentRoom.walls[0] || MapManager.currentRoom.walls[1]) && !(MapManager.currentRoom.walls[2] && MapManager.currentRoom.walls[3]) && !(MapManager.currentRoom.walls[0] && MapManager.currentRoom.walls[1]))
                 {
                     cameraPosXBounds = new Vector2(MapManager.currentRoom.transform.position.x, MapManager.currentRoom.transform.position.x);
@@ -133,6 +140,9 @@ public class Player : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Called when the current room contains more than 1 blocks. Clamps the camera according to the existing walls of the current room.
+    /// </summary>
     private void MultiRoomCameraBoundClamp()
     {
         cameraPosXBounds = new Vector2(
@@ -143,6 +153,9 @@ public class Player : MonoBehaviour
             MapManager.currentRoom.walls[0] ? Camera.main.transform.position.y : Mathf.Infinity);
     }
 
+    /// <summary>
+    /// Makes the player go towards the mouse pointer.
+    /// </summary>
     private void FollowMouseMovement()
     {
         //Debug.Log(MousePointer.currentPosition);
@@ -183,13 +196,18 @@ public class Player : MonoBehaviour
         {
             collision.GetComponent<MemoryTile>().OnPlayerEnter();
         }
-        else if(collision.tag.Equals("MemoryGridSubmitTile"))
+        else if (collision.CompareTag("MemoryGridSubmitTile"))
         {
             StartCoroutine(TogglePuzzleBool_MemoryGrid());
+        }
+        else if (collision.CompareTag("MusicPuzzleSubmitTile"))
+        {
+            StartCoroutine(TogglePuzzleBool_MusicPuzzle());
         }
     }
 
     public static bool enteredMemoryGridPuzzle { get; private set; }
+    public static bool enteredMusicPuzzleSubmit { get; private set; }
 
     private IEnumerator TogglePuzzleBool_MemoryGrid()
     {
@@ -198,6 +216,18 @@ public class Player : MonoBehaviour
         enteredMemoryGridPuzzle = false;
     }
 
+    private IEnumerator TogglePuzzleBool_MusicPuzzle()
+    {
+        enteredMusicPuzzleSubmit = true;
+        yield return new WaitForEndOfFrame();
+        enteredMusicPuzzleSubmit = false;
+    }
+
+    /// <summary>
+    /// Called when entering a door in order to avoid continous enter events on two doors. This is a previous bug that's most likely fixed now, but I'd rather keep this and remove it once
+    /// I'm done with more important things.
+    /// </summary>
+    /// <returns></returns>
     private IEnumerator DoorTriggerCheckCooldown()
     {
         checksForDoorTrigger = false;
@@ -205,8 +235,9 @@ public class Player : MonoBehaviour
         checksForDoorTrigger = true;
     }
 
-    List<Room> currentRooms = new List<Room>();
-
+    /// <summary>
+    /// Called when the player enters a door. Moves the previous room behind the Z position that should be used for current rooms.
+    /// </summary>
     private void OnDoorEnter()
     {
         foreach(Room r in currentRooms)
@@ -218,6 +249,9 @@ public class Player : MonoBehaviour
         previousRoomJ = currentRoomJ;
     }
 
+    /// <summary>
+    /// Called when the player leaves the door (after movementAfterDoor position is applied). Moves the current room to the Z position that should be used for current rooms.
+    /// </summary>
     private void OnDoorLeave()
     {
         SetCurrentRooms();
@@ -228,6 +262,9 @@ public class Player : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sets the current rooms by casting the player position to grid position.
+    /// </summary>
     private void SetCurrentRooms()
     {
         currentRooms.Clear();
@@ -237,6 +274,11 @@ public class Player : MonoBehaviour
         CollectCurrentRooms(currentRoomI, currentRoomJ);
     }
 
+    /// <summary>
+    /// Finds all rooms that can be visited from the room the player is currently in, without having to enter doors.
+    /// </summary>
+    /// <param name="fromI"></param>
+    /// <param name="fromJ"></param>
     private void CollectCurrentRooms(int fromI, int fromJ)
     {
         currentRooms.Add(MapManager.roomGrid[fromI][fromJ]);

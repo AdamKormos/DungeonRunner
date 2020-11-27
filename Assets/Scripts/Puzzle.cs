@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-struct PuzzleComponent
+public struct PuzzleComponent
 {
     [SerializeField] public GameObject objectToSpawn;
     [SerializeField] int minimumDistanceFromPuzzle, maximumDistanceFromPuzzle;
@@ -21,21 +21,24 @@ struct PuzzleComponent
 
 public class Puzzle : MonoBehaviour
 {
-    [SerializeField] PuzzleComponent mainComponent = default;
-    [SerializeField] PuzzleComponent[] otherComponents = default;
+    [SerializeField] protected PuzzleComponent[] components = default;
     public static Dictionary<Puzzle, JigsawPosition> jigsawPieceDict = new Dictionary<Puzzle, JigsawPosition>();
 
+    /// <summary>
+    /// Called after the puzzle was assigned to the grid.
+    /// </summary>
     public void SpawnPuzzleComponents()
     {
-        GameObject mainComponentGO = Instantiate(mainComponent.objectToSpawn, transform.position, Quaternion.identity, this.transform);
-        mainComponentGO.transform.position = transform.position;
-
-        foreach(PuzzleComponent component in otherComponents)
+        for(int i = 0; i < components.Length; i++)
         {
-            GameObject puzzleComponent = Instantiate(component.objectToSpawn, transform.position, Quaternion.identity, this.transform);
+            GameObject puzzleComponent = Instantiate(components[i].objectToSpawn, transform.position, Quaternion.identity, this.transform);
             puzzleComponent.transform.position = MapManager.AssignPuzzleToGrid();
-            
+            components[i].objectToSpawn = puzzleComponent; // So that we can refer to the instantiated, in-game version of the object and modify it.
+
             //puzzleComponent.transform.position = mainComponentGO.transform.position + 
         }
     }
+
+    protected virtual void OnAnswerSubmitted() { }
+    protected virtual void OnCorrectAnswer() { }
 }

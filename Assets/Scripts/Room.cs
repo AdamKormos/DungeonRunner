@@ -37,6 +37,10 @@ public class Room : MonoBehaviour
 #endif
     }
 
+    /// <summary>
+    /// Does this room have any doors?
+    /// </summary>
+    /// <returns></returns>
     public bool HasAnyDoors() { return doors[0] || doors[1] || doors[2] || doors[3]; }
 
     /// <summary>

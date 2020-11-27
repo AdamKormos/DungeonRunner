@@ -12,6 +12,9 @@ public class MemoryTile : MonoBehaviour
         if(spriteRenderer.color != Color.red) spriteRenderer.color = (Random.Range(0, 2) == 0 ? Color.white : Color.black); 
     }
 
+    /// <summary>
+    /// Called when the player enters this tile. Based on what color it is right now, it changes to either black or white.
+    /// </summary>
     public void OnPlayerEnter()
     {
         if (spriteRenderer.color != Color.red)

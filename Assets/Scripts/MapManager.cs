@@ -30,13 +30,6 @@ public class MapManager : MonoBehaviour
         roomOffsets = new Vector2(Camera.main.orthographicSize * Camera.main.aspect, Camera.main.orthographicSize) * 2f;
 
         LayoutInit();
-
-        do
-        {
-            Player.currentRoomI = Random.Range(0, gridSize.y);
-            Player.currentRoomJ = Random.Range(0, gridSize.x);
-            currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ];
-        } while (currentRoom == null);
     }
 
     private void Update()
@@ -44,6 +37,9 @@ public class MapManager : MonoBehaviour
         currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ]; // Set z to -8f
     }
 
+    /// <summary>
+    /// The main init method of the map. Covers the layout of rooms, merged rooms and puzzles.
+    /// </summary>
     private void LayoutInit()
     {
         inaccessibleCoords.Clear();
@@ -62,9 +58,26 @@ public class MapManager : MonoBehaviour
         else
         {
             FinalizeGrid();
+            SetInitialPlayerPosition();
             //ShufflePuzzleSelection();
             GeneratePuzzles();
         }
+    }
+
+    /// <summary>
+    /// Defines where the player will spawn. It must be done before GeneratePuzzles, because for example, a MemoryTile throws Nullptrexp if the player spawns on it, since OnPlayerEnter()
+    /// gets triggered and the tile has a component that gets referenced at Start().
+    /// </summary>
+    private void SetInitialPlayerPosition()
+    {
+        do
+        {
+            Player.currentRoomI = Random.Range(0, gridSize.y);
+            Player.currentRoomJ = Random.Range(0, gridSize.x);
+            currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ];
+        } while (currentRoom == null);
+
+        roomGrid[Player.currentRoomI][Player.currentRoomJ].containsPuzzle = true;
     }
 
     /// <summary>
@@ -83,6 +96,9 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Creates the puzzles and spawns their components as well.
+    /// </summary>
     private void GeneratePuzzles()
     {
         for(int i = 0; i < 4 && i < puzzles.Length; i++)
@@ -113,6 +129,10 @@ public class MapManager : MonoBehaviour
         return new Vector3(newTilePos.x, newTilePos.y, -8.5f);
     }
 
+    /// <summary>
+    /// Called once the existing rooms' count is bigger than half of the grid size (when the size is acceptable). Starts merging and once it finished, it destroys the remaining
+    /// inaccessible rooms and according to that, any adjacent room doors that may lead to them also get deleted.
+    /// </summary>
     private void FinalizeGrid()
     {
         LookForMerge();
@@ -150,6 +170,9 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Iterates through the grid. Driver of SeekForMerge.
+    /// </summary>
     private void LookForMerge()
     {
         for (int i = 0; i < gridSize.y; i++)
@@ -161,6 +184,14 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// If the room found on the given coordinates can be accessed from the player's first position, the room might seek for merge. It can happen in two directions, down or left so that
+    /// we don't iterate through every direction twice. Once the direction is picked randomly, the method returns, if by any chance, the room we want to merge with is not in the grid.
+    /// If the method continues, we get the merge chance (higher for inaccessible rooms) and if whether the room at grid[i, j] has the existing walls or not. If so, and if the generated
+    /// number is good, we destroy the two rooms' walls that should be gone by merging, merge, and continue looking for merging if the current room size is < 3.
+    /// </summary>
+    /// <param name="i"></param>
+    /// <param name="j"></param>
     private void SeekForMerge(int i, int j)
     {
         if (!inaccessibleCoords.Contains(new Tuple<int, int>(i, j))) // If room is accessible
@@ -179,7 +210,7 @@ public class MapManager : MonoBehaviour
 
             if (roomGrid[i][j].blockCount > 3 || mergeAttemptRoomCoords.Item1 < 0 || mergeAttemptRoomCoords.Item2 < 0 || mergeAttemptRoomCoords.Item1 >= gridSize.y || mergeAttemptRoomCoords.Item2 >= gridSize.x) return;
             
-            //Debug.Log(roomGrid[i][j].blockCount);
+            Debug.Log(roomGrid[i][j].blockCount);
 
             Room mergeAttemptRoom = roomGrid[mergeAttemptRoomCoords.Item1][mergeAttemptRoomCoords.Item2];
 
@@ -211,8 +242,9 @@ public class MapManager : MonoBehaviour
 
                     if (roomGrid[i][j].GetDoorOfDirection(d) != null) Destroy(roomGrid[i][j].GetDoorOfDirection(d).gameObject);
 
-                    roomGrid[i][j].blockCount++;
-                    mergeAttemptRoom.blockCount++;
+                    recentlyMergedRoomCoords.Clear();
+                    CollectRecentlyMergedRooms(i, j);
+                    Debug.Log(recentlyMergedRoomCoords.Count);
 
                     inaccessibleCoords.Remove(new Tuple<int, int>(mergeAttemptRoomCoords.Item1, mergeAttemptRoomCoords.Item2));
 
@@ -225,6 +257,26 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    List<Tuple<int, int>> recentlyMergedRoomCoords = new List<Tuple<int, int>>();
+
+    /// <summary>
+    /// Finds all rooms that can be visited from the room the merge started in (and of course, from the room the merge goes to, due to the recursion).
+    /// </summary>
+    /// <param name="fromI"></param>
+    /// <param name="fromJ"></param>
+    private void CollectRecentlyMergedRooms(int fromI, int fromJ)
+    {
+        roomGrid[fromI][fromJ].blockCount++;
+        recentlyMergedRoomCoords.Add(new Tuple<int, int>(fromI, fromJ));
+        if (!MapManager.roomGrid[fromI][fromJ].walls[0] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI + 1, fromJ))) CollectRecentlyMergedRooms(fromI + 1, fromJ);
+        if (!MapManager.roomGrid[fromI][fromJ].walls[1] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI - 1, fromJ))) CollectRecentlyMergedRooms(fromI - 1, fromJ);
+        if (!MapManager.roomGrid[fromI][fromJ].walls[2] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI, fromJ + 1))) CollectRecentlyMergedRooms(fromI, fromJ + 1);
+        if (!MapManager.roomGrid[fromI][fromJ].walls[3] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI, fromJ - 1))) CollectRecentlyMergedRooms(fromI, fromJ - 1);
+    }
+
+    /// <summary>
+    /// Destroys every room in the grid and clears the roomGrid list. Used when the generated map is too small.
+    /// </summary>
     private void DestroyGridRooms()
     {
         for (int i = 0; i < gridSize.y; i++)
@@ -244,6 +296,9 @@ public class MapManager : MonoBehaviour
     static int activeRoomCount = 0;
     static List<Tuple<int, int>> inaccessibleCoords = new List<Tuple<int, int>>();
 
+    /// <summary>
+    /// Goes through the whole map and selects the rooms that are inaccessible.
+    /// </summary>
     private void TraverseMap()
     {
         keepRooms = new bool[gridSize.y][];
@@ -253,6 +308,9 @@ public class MapManager : MonoBehaviour
         MarkInaccessibleRooms();
     }
 
+    /// <summary>
+    /// Adds inaccessible rooms (the ones that couldn't be reached) to the list.
+    /// </summary>
     private static void MarkInaccessibleRooms()
     {
         activeRoomCount = 0;
@@ -271,6 +329,11 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Visits the given room's neighbours and tells to keep the given room, as it was found.
+    /// </summary>
+    /// <param name="roomI"></param>
+    /// <param name="roomJ"></param>
     private void TraverseAdjacents(int roomI, int roomJ)
     {
         keepRooms[roomI][roomJ] = true;
@@ -281,6 +344,11 @@ public class MapManager : MonoBehaviour
         if (roomGrid[roomI][roomJ].doors[2] && !keepRooms[roomI][roomJ + 1]) TraverseAdjacents(roomI, roomJ + 1);
     }
 
+    /// <summary>
+    /// Loops through the grid and fills the roomGrid. Driver for SetRandomDoors.
+    /// </summary>
+    /// <param name="height"></param>
+    /// <param name="width"></param>
     private void GenerateLayout(int height, int width)
     {
         roomGrid = new Room[height][];
@@ -296,6 +364,11 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Called on every room at GenerateLayout. Assigns doors in the down and left directions randomly to the given room, and applies changes to the adjacent room's set of doors as well.
+    /// </summary>
+    /// <param name="i"></param>
+    /// <param name="j"></param>
     private void SetRandomDoors(int i, int j)
     {
         GameObject roomGO = Instantiate(roomSample, 
@@ -334,11 +407,17 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Creates a door object and assigns it to the given room's layout.
+    /// </summary>
+    /// <param name="i"></param>
+    /// <param name="j"></param>
+    /// <param name="direction"></param>
     public void AddDoorToRoom(int i, int j, Direction direction)
     {
         GameObject door = Instantiate(doorSample, roomGrid[i][j].transform.position, Quaternion.identity, roomGrid[i][j].transform);
         door.GetComponent<Door>().doorDirection = direction;
-        door.transform.position += new Vector3(0f, 0f, -1f);
+        door.transform.position += new Vector3(0f, 0f, -1.5f);
 
         switch (direction)
         {
@@ -360,8 +439,14 @@ public class MapManager : MonoBehaviour
         }
     }
 
-    float wallOffsetFromDoor = 0.05f;
+    //float wallOffsetFromDoor = 0.05f;
 
+    /// <summary>
+    /// Creates a wall object and assigns it to the given room's layout.
+    /// </summary>
+    /// <param name="i"></param>
+    /// <param name="j"></param>
+    /// <param name="direction"></param>
     public void AddWallToRoom(int i, int j, Direction direction)
     {
         GameObject wall = Instantiate(wallSample, roomGrid[i][j].transform.position, Quaternion.identity, roomGrid[i][j].transform);
@@ -394,6 +479,10 @@ public class MapManager : MonoBehaviour
     public static Vector2 movementAfterDoor;
     static float unitOnDoorEntrance = 3f;
 
+    /// <summary>
+    /// Called when entering a door. Gives a vector a certain value that is used in the Player to be applied for transmission between two rooms.
+    /// </summary>
+    /// <param name="d"></param>
     public static void OnRoomChange(Direction d)
     {
         if(d == Direction.Down)
@@ -416,27 +505,44 @@ public class MapManager : MonoBehaviour
         //currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ];
     }
 
-    public static void ApplyCurrentRoomIndices()
-    {
-        currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ];
-    }
-
+    /// <summary>
+    /// Gets the GRID DISTANCE between two rooms (using Manhattan distance).
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
     public static int GetDistanceBetweenRoomsByPosition(Room a, Room b)
     {
         return Mathf.Abs(((int)Mathf.Round(a.transform.position.y / roomOffsets.y) - (int)Mathf.Round(a.transform.position.y / roomOffsets.y))) +
             Mathf.Abs(((int)Mathf.Round(b.transform.position.x / roomOffsets.x) - (int)Mathf.Round(b.transform.position.x / roomOffsets.x)));
     }
 
+    /// <summary>
+    /// Converts a world position to grid position.
+    /// </summary>
+    /// <param name="pos"></param>
+    /// <returns></returns>
     public static Tuple<int, int> PositionToGridPosition(Vector2 pos)
     {
         return new Tuple<int, int>((int)Mathf.Round(pos.y / roomOffsets.y), (int)Mathf.Round(pos.x / roomOffsets.x));
     }
 
+    /// <summary>
+    /// Converts a grid position to world position.
+    /// </summary>
+    /// <param name="i"></param>
+    /// <param name="j"></param>
+    /// <returns></returns>
     public static Vector2 GridPositionToPosition(int i, int j)
     {
         return new Vector2(j * roomOffsets.x, i * roomOffsets.y);
     }
 
+    /// <summary>
+    /// Converts a position to room.
+    /// </summary>
+    /// <param name="pos"></param>
+    /// <returns></returns>
     public static Room PositionToRoom(Vector2 pos)
     {
         Tuple<int, int> coords = PositionToGridPosition(pos);
