@@ -69,6 +69,8 @@
     <Compile Include="Assets\Scripts\Jigsaw.cs" />
     <Compile Include="Assets\Scripts\JigsawPiece.cs" />
     <Compile Include="Assets\Scripts\JigsawPieceHolder.cs" />
+    <Compile Include="Assets\Scripts\LetterPuzzle.cs" />
+    <Compile Include="Assets\Scripts\LetterTile.cs" />
     <Compile Include="Assets\Scripts\MapManager.cs" />
     <Compile Include="Assets\Scripts\MemoryGrid.cs" />
     <Compile Include="Assets\Scripts\MemoryTile.cs" />
@@ -79,6 +81,7 @@
     <Compile Include="Assets\Scripts\Puzzle.cs" />
     <Compile Include="Assets\Scripts\Room.cs" />
     <Compile Include="Assets\Scripts\SwitchPuzzle.cs" />
+    <Compile Include="Assets\Scripts\UI_Hint.cs" />
     <Compile Include="Assets\Scripts\Wall.cs" />
     <Compile Include="Assets\Scripts\Water.cs" />
     <Reference Include="Unity.Timeline.Editor">

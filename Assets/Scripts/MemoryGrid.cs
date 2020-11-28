@@ -11,7 +11,7 @@ public class MemoryGrid : Puzzle
     Vector2 offsetBetweenTiles = new Vector2();
     int redTileI, redTileJ;
     static List<Color> solutionList = new List<Color>();
-    static bool isCompleted = false;
+    bool isCompleted = false;
 
     // Start is called before the first frame update
     void Start()
@@ -25,7 +25,7 @@ public class MemoryGrid : Puzzle
 
     private void Update()
     {
-        if (Player.enteredMemoryGridPuzzle && !isCompleted) OnAnswerSubmitted();
+        if (Player.enteredMemoryGridSubmit && !isCompleted) OnAnswerSubmitted();
     }
 
     private void GenerateGrid()
@@ -120,7 +120,7 @@ public class MemoryGrid : Puzzle
     {
         isCompleted = true;
 
-        JigsawPosition jigsawPosition = Puzzle.jigsawPieceDict[this];
+        JigsawPosition jigsawPosition = jigsawPieceDict[this];
         JigsawPiece jigsawPiece = jigsawPieceTransform.gameObject.AddComponent<JigsawPiece>();
 
         BoxCollider2D boxCollider = jigsawPieceTransform.gameObject.AddComponent<BoxCollider2D>();
@@ -129,5 +129,10 @@ public class MemoryGrid : Puzzle
 
         jigsawPieceTransform.GetComponent<SpriteRenderer>().sprite = MapManager.s_jigsawPieceSprites[(int)jigsawPosition];
         jigsawPiece.jigsawPosition = jigsawPosition;
+
+        foreach (MemoryTile memoryTile in GetComponentsInChildren<MemoryTile>(true))
+        {
+            memoryTile.GetComponent<Collider2D>().enabled = false; // So that the player can't mess around with the tiles anymore
+        }
     }
 }

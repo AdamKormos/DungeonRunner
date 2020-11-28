@@ -13,7 +13,8 @@ public class MusicPuzzle : Puzzle
     static List<AudioClip> playerInputList = default;
     static AudioSource audioSource = default;
     Vector2 offsetBetweenTiles = new Vector2();
-    static bool isCompleted = false;
+    bool isCompleted = false;
+    public static Tuple<int, int> musicPlayerRoomCoords { get; private set; }
 
     private void OnBecameInvisible()
     {
@@ -26,7 +27,9 @@ public class MusicPuzzle : Puzzle
         playerInputList = new List<AudioClip>();
         audioSource = GetComponent<AudioSource>();
         offsetBetweenTiles = sampleTileObject.GetComponent<SpriteRenderer>().bounds.size;
-        GenerateGrid();
+        musicPlayerRoomCoords = MapManager.PositionToGridPosition(components[0].objectToSpawn.transform.position);
+
+        GenerateMusicTileRow();
         CreateSolution();
 
         //OnCorrectAnswer();
@@ -34,9 +37,27 @@ public class MusicPuzzle : Puzzle
 
     private void Update()
     {
-        if (Player.enteredMemoryGridPuzzle && !isCompleted) OnAnswerSubmitted();
+        if (Player.enteredMusicPuzzleSubmit && !isCompleted) OnAnswerSubmitted();
+        else if (Player.enteredMusicPlayerRoom) StartCoroutine(PlaySolution());
     }
 
+    /// <summary>
+    /// Plays the solution's tones in the correct order with applied delay so that every sound gets played totally, without interruption.
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator PlaySolution()
+    {
+        for (int i = 0; i < solutionList.Length; i++)
+        {
+            audioSource.clip = solutionList[i];
+            audioSource.Play();
+            yield return new WaitForSeconds(solutionList[i].length);
+        }
+    }
+
+    /// <summary>
+    /// Makes a random list of the existing sounds to be the solution list.
+    /// </summary>
     private void CreateSolution()
     {
         int solutionRange = Random.Range(3, 8);
@@ -44,11 +65,14 @@ public class MusicPuzzle : Puzzle
 
         for(int i = 0; i < solutionList.Length; i++)
         {
-            solutionList[i] = sounds[Random.Range(0, sounds.Length)];
+            //solutionList[i] = sounds[Random.Range(0, sounds.Length)]; @TempRemove
         }
     }
 
-    private void GenerateGrid()
+    /// <summary>
+    /// Creates the row of music tiles with giving each other a sound that will be put on the player's sound input list which can later be checked if whether or not it's the correct solution.
+    /// </summary>
+    private void GenerateMusicTileRow()
     {
         for (int i = 0; i < sounds.Length; i++) // The amount of sounds also represents the number of possible playable sounds.
         {
@@ -62,6 +86,10 @@ public class MusicPuzzle : Puzzle
         }
     }
 
+    /// <summary>
+    /// Called when the player enters a tile. It adds the tile's sound to the input list and plays the sound.
+    /// </summary>
+    /// <param name="soundOfTtile"></param>
     public static void OnTileEntered(AudioClip soundOfTtile)
     {
         playerInputList.Add(soundOfTtile);
@@ -89,7 +117,7 @@ public class MusicPuzzle : Puzzle
     {
         isCompleted = true;
 
-        JigsawPosition jigsawPosition = Puzzle.jigsawPieceDict[this];
+        JigsawPosition jigsawPosition = jigsawPieceDict[this];
         JigsawPiece jigsawPiece = jigsawPieceTransform.gameObject.AddComponent<JigsawPiece>();
 
         BoxCollider2D boxCollider = jigsawPieceTransform.gameObject.AddComponent<BoxCollider2D>();
@@ -98,5 +126,10 @@ public class MusicPuzzle : Puzzle
 
         jigsawPieceTransform.GetComponent<SpriteRenderer>().sprite = MapManager.s_jigsawPieceSprites[(int)jigsawPosition];
         jigsawPiece.jigsawPosition = jigsawPosition;
+
+        foreach(MusicTile musicTile in GetComponentsInChildren<MusicTile>(true))
+        {
+            musicTile.GetComponent<Collider2D>().enabled = false; // So that the player can't mess around with the tiles anymore
+        }
     }
 }

@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public struct Bound
 {
-    [SerializeField] int min, max;
+    [SerializeField] public int min, max;
 
     public bool Fits(int val)
     {

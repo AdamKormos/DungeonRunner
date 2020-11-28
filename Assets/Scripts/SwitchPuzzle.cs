@@ -12,7 +12,7 @@ public class SwitchPuzzle : Puzzle
         components[0].objectToSpawn.SetActive(isObstacleActive);
 
         JigsawPiece jigsawObject = components[0].objectToSpawn.GetComponentInChildren<JigsawPiece>(true);
-        JigsawPosition jigsawPosition = Puzzle.jigsawPieceDict[this];
+        JigsawPosition jigsawPosition = jigsawPieceDict[this];
         jigsawObject.jigsawPosition = jigsawPosition;
         jigsawObject.GetComponentInChildren<SpriteRenderer>(true).sprite = MapManager.s_jigsawPieceSprites[(int)jigsawPosition];
 
@@ -36,6 +36,8 @@ public class SwitchPuzzle : Puzzle
     {
         if (collision.GetComponent<Player>())
         {
+            Player.madeHintEnableOnTriggerEnter = true;
+            UI_Hint.SetHint("[Enter] - Pull switch");
             isPlayerInRange = true;
             //Debug.Log("P");
         }

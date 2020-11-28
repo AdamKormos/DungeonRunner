@@ -14,7 +14,7 @@ public class ClockPuzzle : Puzzle
     void Start()
     {
         jigsawObject = components[0].objectToSpawn.GetComponent<JigsawPiece>();
-        JigsawPosition jigsawPosition = Puzzle.jigsawPieceDict[this];
+        JigsawPosition jigsawPosition = jigsawPieceDict[this];
         jigsawObject.jigsawPosition = jigsawPosition;
         jigsawObject.GetComponentInChildren<SpriteRenderer>(true).sprite = MapManager.s_jigsawPieceSprites[(int)jigsawPosition];
 
@@ -58,7 +58,7 @@ public class ClockPuzzle : Puzzle
     {
         int hour = -1;
         float secsToCompleteHour = (360f / littleHandRotationDegreePerSec);
-        Debug.Log(secsToCompleteHour);
+        //Debug.Log(secsToCompleteHour);
 
         while(true)
         {

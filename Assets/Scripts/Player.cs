@@ -10,7 +10,7 @@ public class Player : MonoBehaviour
     [SerializeField] float staminaDecreasePerFrame = 0.005f;
     [SerializeField] float staminaReloadOnWaterDrink = 50f;
     [SerializeField] int staminaReloadFrameAmount = 1000;
-    [SerializeField] Rigidbody2D rigidbody;
+    [SerializeField] new Rigidbody2D rigidbody;
     public static Vector2 cameraResolutionBounds { get; private set; }
     public static int currentRoomI, currentRoomJ, previousRoomI, previousRoomJ;
     bool isReloadingStamina = false, checksForDoorTrigger = true;
@@ -163,6 +163,8 @@ public class Player : MonoBehaviour
         rigidbody.AddForce(transform.forward);
     }
 
+    public static bool madeHintEnableOnTriggerEnter = false;
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (checksForDoorTrigger && collision.GetComponent<Door>())
@@ -204,16 +206,39 @@ public class Player : MonoBehaviour
         {
             StartCoroutine(TogglePuzzleBool_MusicPuzzle());
         }
+        else if(collision.CompareTag("LetterPuzzleSubmitTile"))
+        {
+            StartCoroutine(TogglePuzzleBool_LetterPuzzle());
+        }
+        else if(collision.CompareTag("LetterPuzzleUpArrow"))
+        {
+            collision.GetComponentInParent<LetterTile>().OnPlayerEnteredOnArrow(true);
+        }
+        else if(collision.CompareTag("LetterPuzzleDownArrow"))
+        {
+            collision.GetComponentInParent<LetterTile>().OnPlayerEnteredOnArrow(false);
+        }
     }
 
-    public static bool enteredMemoryGridPuzzle { get; private set; }
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if(madeHintEnableOnTriggerEnter)
+        {
+            madeHintEnableOnTriggerEnter = false;
+            UI_Hint.SetHint("");
+        }
+    }
+
+    public static bool enteredMemoryGridSubmit { get; private set; }
     public static bool enteredMusicPuzzleSubmit { get; private set; }
+    public static bool enteredLetterPuzzleSubmit { get; private set; }
+    public static bool enteredMusicPlayerRoom { get; private set; } // where the sounds for music puzzle get played in the correct order
 
     private IEnumerator TogglePuzzleBool_MemoryGrid()
     {
-        enteredMemoryGridPuzzle = true;
+        enteredMemoryGridSubmit = true;
         yield return new WaitForEndOfFrame();
-        enteredMemoryGridPuzzle = false;
+        enteredMemoryGridSubmit = false;
     }
 
     private IEnumerator TogglePuzzleBool_MusicPuzzle()
@@ -221,6 +246,20 @@ public class Player : MonoBehaviour
         enteredMusicPuzzleSubmit = true;
         yield return new WaitForEndOfFrame();
         enteredMusicPuzzleSubmit = false;
+    }
+
+    private IEnumerator TogglePuzzleBool_MusicPlayerRoom()
+    {
+        enteredMusicPlayerRoom = true;
+        yield return new WaitForEndOfFrame();
+        enteredMusicPlayerRoom = false;
+    }
+
+    private IEnumerator TogglePuzzleBool_LetterPuzzle()
+    {
+        enteredLetterPuzzleSubmit = true;
+        yield return new WaitForEndOfFrame();
+        enteredLetterPuzzleSubmit = false;
     }
 
     /// <summary>
@@ -259,6 +298,11 @@ public class Player : MonoBehaviour
         foreach (Room r in currentRooms)
         {
             r.transform.position = new Vector3(r.transform.position.x, r.transform.position.y, -8f);
+        }
+
+        if (MusicPuzzle.musicPlayerRoomCoords != null)
+        {
+            if (currentRoomI == MusicPuzzle.musicPlayerRoomCoords.Item1 && currentRoomJ == MusicPuzzle.musicPlayerRoomCoords.Item2) StartCoroutine(TogglePuzzleBool_MusicPlayerRoom());
         }
     }
 

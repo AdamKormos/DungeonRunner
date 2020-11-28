@@ -4,6 +4,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+[System.Serializable]
+public struct EnvironmentObject
+{
+    [SerializeField] public GameObject gameObject;
+    [SerializeField] public bool isPositionRoomCenter;
+}
+
+/// <summary>
+/// @EarlyExec Executes earlier than supposed to by -20.
+/// </summary>
 public class MapManager : MonoBehaviour
 {
     [SerializeField] Vector2Int gridSize = new Vector2Int(4, 4);
@@ -12,6 +22,11 @@ public class MapManager : MonoBehaviour
     [SerializeField] GameObject wallSample = default;
     [SerializeField] Sprite[] singleWalls = default;
     [SerializeField] Sprite[] multipleWalls = default;
+    [Space(20f)]
+    [SerializeField] Bound environmentObjectSpawnAmountBound = default;
+    [SerializeField] EnvironmentObject[] environmentObjects = default;
+    [Space(20f)]
+    [SerializeField] Puzzle jigsaw = default;
     [SerializeField] Puzzle[] puzzles = default;
     [SerializeField] Sprite[] jigsawPieceSprites = default;
     public static Room[][] roomGrid { get; private set; }
@@ -50,7 +65,7 @@ public class MapManager : MonoBehaviour
         currentRoom = roomGrid[Player.currentRoomI][Player.currentRoomJ];
 
         TraverseMap();
-        if (activeRoomCount < (gridSize.y * gridSize.x) / 2)
+        if (activeRoomCount < (gridSize.y * gridSize.x) * 0.5f)
         {
             DestroyGridRooms();
             LayoutInit();
@@ -59,8 +74,38 @@ public class MapManager : MonoBehaviour
         {
             FinalizeGrid();
             SetInitialPlayerPosition();
-            //ShufflePuzzleSelection();
+            ShufflePuzzleSelection();
             GeneratePuzzles();
+            SpawnEnvironmentObjects();
+        }
+    }
+
+    /// <summary>
+    /// Randomly spawns the environment objects in any room with no restriction.
+    /// </summary>
+    private void SpawnEnvironmentObjects()
+    {
+        foreach(EnvironmentObject environmentObject in environmentObjects)
+        {
+            int spawnAmount = Random.Range(environmentObjectSpawnAmountBound.min, environmentObjectSpawnAmountBound.max + 1);
+            for (int i = 0; i < spawnAmount; i++)
+            {
+                Room room = GetRandomRoom();
+                GameObject gameObject = Instantiate(environmentObject.gameObject, room.transform.position, Quaternion.identity, room.transform);
+
+                if (!environmentObject.isPositionRoomCenter)
+                {
+                    Vector2 offsetFromScreenEdge = gameObject.GetComponent<SpriteRenderer>().bounds.size * 1.5f;
+                    gameObject.transform.position = new Vector3(
+                        Random.Range(
+                            room.transform.position.x - Player.cameraResolutionBounds.x + offsetFromScreenEdge.x,
+                            room.transform.position.x + Player.cameraResolutionBounds.x - offsetFromScreenEdge.x),
+                        Random.Range(
+                            room.transform.position.y - Player.cameraResolutionBounds.y + offsetFromScreenEdge.y,
+                            room.transform.position.y + Player.cameraResolutionBounds.y - offsetFromScreenEdge.y),
+                        gameObject.transform.position.z);
+                }
+            }
         }
     }
 
@@ -85,14 +130,31 @@ public class MapManager : MonoBehaviour
     /// </summary>
     private void ShufflePuzzleSelection()
     {
+        Dictionary<int, Puzzle> puzzleIndexDict = new Dictionary<int, Puzzle>(puzzles.Length);
+        int[] puzzleIndexArr = new int[puzzles.Length];
+
+        for (int i = 0; i < puzzles.Length; i++)
+        {
+            puzzleIndexDict.Add(i, puzzles[i]);
+            puzzleIndexArr[i] = i;
+        }
+
         for(int i = 0; i < puzzles.Length-1; i++)
         {
-            if(Random.Range(0, 100) < 30)
+            for(int j = i+1; j < puzzles.Length; j++)
             {
-                Puzzle tmp = puzzles[i];
-                puzzles[Random.Range(i + 1, puzzles.Length)] = tmp;
-                puzzles[i] = tmp;
+                if (Random.Range(0, 100) < 50)
+                {
+                    int tmp = puzzleIndexArr[j];
+                    puzzleIndexArr[j] = puzzleIndexArr[i];
+                    puzzleIndexArr[i] = tmp;
+                }
             }
+        }
+
+        for(int i = 0; i < puzzles.Length; i++)
+        {
+            puzzles[i] = puzzleIndexDict[puzzleIndexArr[i]];
         }
     }
 
@@ -101,11 +163,21 @@ public class MapManager : MonoBehaviour
     /// </summary>
     private void GeneratePuzzles()
     {
-        for(int i = 0; i < 4 && i < puzzles.Length; i++)
+        jigsaw.transform.position = AssignPuzzleToGrid();
+        jigsaw.SpawnPuzzleComponents();
+
+        for (int i = 0; i < 4 && i < puzzles.Length; i++)
         {
             puzzles[i].transform.position = AssignPuzzleToGrid();
-            Puzzle.jigsawPieceDict[puzzles[i]] = (JigsawPosition)(i);
+            if (!Puzzle.jigsawPieceDict.ContainsKey(puzzles[i])) Puzzle.jigsawPieceDict.Add(puzzles[i], (JigsawPosition)(i));
+            else Puzzle.jigsawPieceDict[puzzles[i]] = (JigsawPosition)(i);
             puzzles[i].SpawnPuzzleComponents();
+        }
+
+        for(int i = 4; i < puzzles.Length; i++)
+        {
+            puzzles[i].enabled = false;
+            puzzles[i].gameObject.SetActive(false);
         }
     }
 
@@ -210,7 +282,7 @@ public class MapManager : MonoBehaviour
 
             if (roomGrid[i][j].blockCount > 3 || mergeAttemptRoomCoords.Item1 < 0 || mergeAttemptRoomCoords.Item2 < 0 || mergeAttemptRoomCoords.Item1 >= gridSize.y || mergeAttemptRoomCoords.Item2 >= gridSize.x) return;
             
-            Debug.Log(roomGrid[i][j].blockCount);
+            //Debug.Log(roomGrid[i][j].blockCount);
 
             Room mergeAttemptRoom = roomGrid[mergeAttemptRoomCoords.Item1][mergeAttemptRoomCoords.Item2];
 
@@ -244,7 +316,7 @@ public class MapManager : MonoBehaviour
 
                     recentlyMergedRoomCoords.Clear();
                     CollectRecentlyMergedRooms(i, j);
-                    Debug.Log(recentlyMergedRoomCoords.Count);
+                    //Debug.Log(recentlyMergedRoomCoords.Count);
 
                     inaccessibleCoords.Remove(new Tuple<int, int>(mergeAttemptRoomCoords.Item1, mergeAttemptRoomCoords.Item2));
 
@@ -547,5 +619,21 @@ public class MapManager : MonoBehaviour
     {
         Tuple<int, int> coords = PositionToGridPosition(pos);
         return roomGrid[coords.Item1][coords.Item2];
+    }
+
+    /// <summary>
+    /// Returns a random room that is on the map and isn't null.
+    /// </summary>
+    /// <returns></returns>
+    public static Room GetRandomRoom()
+    {
+        int i, j;
+        do
+        {
+            i = Random.Range(0, s_gridSize.y);
+            j = Random.Range(0, s_gridSize.x);
+        } while (roomGrid[i][j] == null);
+
+        return roomGrid[i][j];
     }
 }
