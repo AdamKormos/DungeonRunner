@@ -9,6 +9,7 @@ TagManager:
   - LetterPuzzleSubmitTile
   - LetterPuzzleUpArrow
   - LetterPuzzleDownArrow
+  - TimeTrialArrowStartTile
   layers:
   - Default
   - TransparentFX

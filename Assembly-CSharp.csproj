@@ -63,6 +63,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Ball.cs" />
+    <Compile Include="Assets\Scripts\BallPuzzle.cs" />
     <Compile Include="Assets\Scripts\Bound.cs" />
     <Compile Include="Assets\Scripts\ClockPuzzle.cs" />
     <Compile Include="Assets\Scripts\Door.cs" />
@@ -79,8 +81,11 @@
     <Compile Include="Assets\Scripts\MusicTile.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />
     <Compile Include="Assets\Scripts\Puzzle.cs" />
+    <Compile Include="Assets\Scripts\RandomDirectionMovement.cs" />
     <Compile Include="Assets\Scripts\Room.cs" />
+    <Compile Include="Assets\Scripts\SpriteAnimationPlayer.cs" />
     <Compile Include="Assets\Scripts\SwitchPuzzle.cs" />
+    <Compile Include="Assets\Scripts\TimeTrialArrowPuzzle.cs" />
     <Compile Include="Assets\Scripts\UI_Hint.cs" />
     <Compile Include="Assets\Scripts\Wall.cs" />
     <Compile Include="Assets\Scripts\Water.cs" />

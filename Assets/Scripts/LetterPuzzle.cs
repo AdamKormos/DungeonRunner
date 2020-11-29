@@ -100,15 +100,18 @@ public class LetterPuzzle : Puzzle
     {
         isCompleted = true;
 
-        JigsawPosition jigsawPosition = jigsawPieceDict[this];
-        JigsawPiece jigsawPiece = jigsawPieceTransform.gameObject.AddComponent<JigsawPiece>();
+        if (jigsawPieceDict.ContainsKey(this))
+        {
+            JigsawPosition jigsawPosition = jigsawPieceDict[this];
+            JigsawPiece jigsawPiece = jigsawPieceTransform.gameObject.AddComponent<JigsawPiece>();
 
-        BoxCollider2D boxCollider = jigsawPieceTransform.gameObject.AddComponent<BoxCollider2D>();
-        boxCollider.isTrigger = true;
-        boxCollider.size = new Vector2(0.8f, 0.8f);
+            BoxCollider2D boxCollider = jigsawPieceTransform.gameObject.AddComponent<BoxCollider2D>();
+            boxCollider.isTrigger = true;
+            boxCollider.size = new Vector2(0.8f, 0.8f);
 
-        jigsawPieceTransform.GetComponent<SpriteRenderer>().sprite = MapManager.s_jigsawPieceSprites[(int)jigsawPosition];
-        jigsawPiece.jigsawPosition = jigsawPosition;
+            jigsawPieceTransform.GetComponent<SpriteRenderer>().sprite = MapManager.s_jigsawPieceSprites[(int)jigsawPosition];
+            jigsawPiece.jigsawPosition = jigsawPosition;
+        }
 
         foreach (LetterTile letterTile in GetComponentsInChildren<LetterTile>(true))
         {

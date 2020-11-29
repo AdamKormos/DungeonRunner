@@ -13,15 +13,19 @@ public class ClockPuzzle : Puzzle
     // Start is called before the first frame update
     void Start()
     {
-        jigsawObject = components[0].objectToSpawn.GetComponent<JigsawPiece>();
-        JigsawPosition jigsawPosition = jigsawPieceDict[this];
-        jigsawObject.jigsawPosition = jigsawPosition;
-        jigsawObject.GetComponentInChildren<SpriteRenderer>(true).sprite = MapManager.s_jigsawPieceSprites[(int)jigsawPosition];
+        if (jigsawPieceDict.ContainsKey(this))
+        {
+            jigsawObject = components[0].objectToSpawn.GetComponent<JigsawPiece>();
+            JigsawPosition jigsawPosition = jigsawPieceDict[this];
+            jigsawObject.jigsawPosition = jigsawPosition;
+            jigsawObject.GetComponentInChildren<SpriteRenderer>(true).sprite = MapManager.s_jigsawPieceSprites[(int)jigsawPosition];
 
-        jigsawObject.transform.parent = this.transform;
-        jigsawObject.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-        jigsawObject.GetComponent<BoxCollider2D>().size = new Vector2(0.6f, 0.6f);
-        jigsawObject.gameObject.SetActive(false);
+            jigsawObject.transform.parent = this.transform;
+            jigsawObject.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            jigsawObject.GetComponent<BoxCollider2D>().size = new Vector2(0.6f, 0.6f);
+            jigsawObject.gameObject.SetActive(false);
+        }
+        else Destroy(components[0].objectToSpawn.gameObject);
 
         {
             littleHand = Instantiate(new GameObject(), this.transform);
@@ -56,6 +60,8 @@ public class ClockPuzzle : Puzzle
 
     private IEnumerator SetPuzzleActivity()
     {
+        if (!jigsawPieceDict.ContainsKey(this)) yield break;
+
         int hour = -1;
         float secsToCompleteHour = (360f / littleHandRotationDegreePerSec);
         //Debug.Log(secsToCompleteHour);

@@ -214,9 +214,13 @@ public class Player : MonoBehaviour
         {
             collision.GetComponentInParent<LetterTile>().OnPlayerEnteredOnArrow(true);
         }
-        else if(collision.CompareTag("LetterPuzzleDownArrow"))
+        else if (collision.CompareTag("LetterPuzzleDownArrow"))
         {
             collision.GetComponentInParent<LetterTile>().OnPlayerEnteredOnArrow(false);
+        }
+        else if (collision.CompareTag("TimeTrialArrowStartTile"))
+        {
+            StartCoroutine(TogglePuzzleBool_TimeTrialArrow());
         }
     }
 
@@ -233,6 +237,14 @@ public class Player : MonoBehaviour
     public static bool enteredMusicPuzzleSubmit { get; private set; }
     public static bool enteredLetterPuzzleSubmit { get; private set; }
     public static bool enteredMusicPlayerRoom { get; private set; } // where the sounds for music puzzle get played in the correct order
+    public static bool startedTimeTrialArrowPuzzle { get; private set; }
+
+    private IEnumerator TogglePuzzleBool_TimeTrialArrow()
+    {
+        startedTimeTrialArrowPuzzle = true;
+        yield return new WaitForEndOfFrame();
+        startedTimeTrialArrowPuzzle = false;
+    }
 
     private IEnumerator TogglePuzzleBool_MemoryGrid()
     {

@@ -26,6 +26,7 @@ public class MapManager : MonoBehaviour
     [SerializeField] Bound environmentObjectSpawnAmountBound = default;
     [SerializeField] EnvironmentObject[] environmentObjects = default;
     [Space(20f)]
+    [SerializeField] int puzzleAmountToSpawn = 6;
     [SerializeField] Puzzle jigsaw = default;
     [SerializeField] Puzzle[] puzzles = default;
     [SerializeField] Sprite[] jigsawPieceSprites = default;
@@ -33,8 +34,8 @@ public class MapManager : MonoBehaviour
     public static Room currentRoom { get; private set; } // = roomGrid[Player.currentRoomI][Player.currentRoomJ]
     public static Vector2 roomOffsets { get; private set; }
     //static Vector2 doorOffsetFromRoomCenter = new Vector2(0.0763f, 0.0664f);
-    static Vector2 doorOffsetFromRoomCenter = new Vector2(7.9f, 4.4f);
-    static Vector3 localVerticalWallScale = new Vector3(0.1973228f, 0.04432031f, 1f);
+    static Vector2 doorOffsetFromRoomCenter = new Vector2(8.14f, 4.4f);
+    static Vector3 localVerticalWallScale = new Vector3(0.2047224f, 0.04432031f, 1f);
     public static Vector2Int s_gridSize { get; private set; }
     public static Sprite[] s_jigsawPieceSprites { get; private set; }
 
@@ -105,6 +106,9 @@ public class MapManager : MonoBehaviour
                             room.transform.position.y + Player.cameraResolutionBounds.y - offsetFromScreenEdge.y),
                         gameObject.transform.position.z);
                 }
+
+                gameObject.transform.localPosition += new Vector3(0f, 0f, -1.5f);
+                gameObject.transform.localScale = new Vector3(gameObject.transform.localScale.x / room.transform.lossyScale.x, gameObject.transform.localScale.y / room.transform.lossyScale.y);
             }
         }
     }
@@ -126,7 +130,7 @@ public class MapManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Shuffles the puzzle list so that out of all, not the first four will always spawn.
+    /// Shuffles the puzzle list so that out of all, not the first four will always give jigsaw pieces.
     /// </summary>
     private void ShufflePuzzleSelection()
     {
@@ -166,18 +170,17 @@ public class MapManager : MonoBehaviour
         jigsaw.transform.position = AssignPuzzleToGrid();
         jigsaw.SpawnPuzzleComponents();
 
-        for (int i = 0; i < 4 && i < puzzles.Length; i++)
+        // Spawn ALL puzzles
+        for (int i = 0; i < puzzleAmountToSpawn && i < puzzles.Length; i++)
         {
             puzzles[i].transform.position = AssignPuzzleToGrid();
-            if (!Puzzle.jigsawPieceDict.ContainsKey(puzzles[i])) Puzzle.jigsawPieceDict.Add(puzzles[i], (JigsawPosition)(i));
-            else Puzzle.jigsawPieceDict[puzzles[i]] = (JigsawPosition)(i);
             puzzles[i].SpawnPuzzleComponents();
         }
 
-        for(int i = 4; i < puzzles.Length; i++)
+        // Set puzzles that give jigsaw pieces:
+        for(int i = 0; i < 4 && i < puzzles.Length; i++)
         {
-            puzzles[i].enabled = false;
-            puzzles[i].gameObject.SetActive(false);
+            Puzzle.jigsawPieceDict[puzzles[i]] = (JigsawPosition)(i);
         }
     }
 
@@ -489,26 +492,27 @@ public class MapManager : MonoBehaviour
     {
         GameObject door = Instantiate(doorSample, roomGrid[i][j].transform.position, Quaternion.identity, roomGrid[i][j].transform);
         door.GetComponent<Door>().doorDirection = direction;
-        door.transform.position += new Vector3(0f, 0f, -1.5f);
 
         switch (direction)
         {
             case Direction.Down:
-                door.transform.position += new Vector3(0f, -doorOffsetFromRoomCenter.y, 0f);
+                door.transform.localPosition = new Vector3(0f, -0.0665f, 0f);
                 door.transform.Rotate(0f, 0f, 180f);
                 break;
             case Direction.Left:
-                door.transform.position += new Vector3(-doorOffsetFromRoomCenter.x, 0f, 0f);
+                door.transform.localPosition = new Vector3(-0.0776f, 0f, 0f);
                 door.transform.Rotate(0f, 0f, 90f);
                 break;
             case Direction.Up:
-                door.transform.position += new Vector3(0f, doorOffsetFromRoomCenter.y, 0f);
+                door.transform.localPosition = new Vector3(0f, 0.0665f, 0f);
                 break;
             case Direction.Right:
-                door.transform.position += new Vector3(doorOffsetFromRoomCenter.x, 0f, 0f);
+                door.transform.localPosition = new Vector3(0.0776f, 0f, 0f);
                 door.transform.Rotate(0f, 0f, 270f);
                 break;
         }
+
+        door.transform.localPosition += new Vector3(0f, 0f, -1.5f);
     }
 
     //float wallOffsetFromDoor = 0.05f;
@@ -533,7 +537,7 @@ public class MapManager : MonoBehaviour
                 wall.transform.Rotate(0f, 0f, 180f);
                 break;
             case Direction.Left:
-                wall.transform.localPosition = new Vector3(-0.0715f, -0.0035f, -1f);//new Vector3(-doorOffsetFromRoomCenter.x - wallOffsetFromDoor, 0.0042f, 0f);
+                wall.transform.localPosition = new Vector3(-0.0768f, -0.0035f, -1f);//new Vector3(-doorOffsetFromRoomCenter.x - wallOffsetFromDoor, 0.0042f, 0f);
                 wall.transform.Rotate(0f, 0f, 90f);
                 wall.transform.localScale = localVerticalWallScale;
                 break;
@@ -541,7 +545,7 @@ public class MapManager : MonoBehaviour
                 wall.transform.localPosition = new Vector3(-0.0061f, 0.0677f, -1f);//doorOffsetFromRoomCenter.y + wallOffsetFromDoor, 0f);
                 break;
             case Direction.Right:
-                wall.transform.localPosition = new Vector3(0.0715f, 0.0055f, -1f);//+= new Vector3(doorOffsetFromRoomCenter.x + wallOffsetFromDoor, 0.0042f, 0f);
+                wall.transform.localPosition = new Vector3(0.0768f, 0.0055f, -1f);//+= new Vector3(doorOffsetFromRoomCenter.x + wallOffsetFromDoor, 0.0042f, 0f);
                 wall.transform.Rotate(0f, 0f, 270);
                 wall.transform.localScale = localVerticalWallScale;
                 break;
@@ -593,7 +597,7 @@ public class MapManager : MonoBehaviour
     /// Converts a world position to grid position.
     /// </summary>
     /// <param name="pos"></param>
-    /// <returns></returns>
+    /// <returns>[i][j]</returns>
     public static Tuple<int, int> PositionToGridPosition(Vector2 pos)
     {
         return new Tuple<int, int>((int)Mathf.Round(pos.y / roomOffsets.y), (int)Mathf.Round(pos.x / roomOffsets.x));
