@@ -29,7 +29,7 @@ public class TimeTrialArrowPuzzle : Puzzle
         }
         else
         {
-            Destroy(components[0].objectToSpawn);
+            components[0].objectToSpawn.SetActive(false);
             gameObject.SetActive(false);
         }
     }
@@ -75,7 +75,7 @@ public class TimeTrialArrowPuzzle : Puzzle
     /// <returns></returns>
     private Direction[] TranslateAndVisualizeGoodPathToDirections()
     {
-        Debug.Log("Output array length is: " + (goodPath.Count - 1));
+        //Debug.Log("Output array length is: " + (goodPath.Count - 1));
         Direction[] output = new Direction[goodPath.Count - 1];
         arrowObjectArr = new GameObject[output.Length];
         float firstArrowXOffset = sampleDirectionPointerArrowObject.GetComponent<SpriteRenderer>().sprite.bounds.size.x * ((float)arrowObjectArr.Length / 2f);
@@ -137,7 +137,6 @@ public class TimeTrialArrowPuzzle : Puzzle
     }
 
     Room jigsawPieceRoom = default;
-    List<Room> recentVisitedRooms = new List<Room>();
     List<Room> goodPath = new List<Room>();
 
     /// <summary>
@@ -146,78 +145,159 @@ public class TimeTrialArrowPuzzle : Puzzle
     /// <returns></returns>
     private void GetOptimalRoomForJigsawPiece(int currentI, int currentJ)
     {
-        if (goodPath.Count != 0)
+        Room destinationRoom = default;
+        Room thisRoom = MapManager.roomGrid[currentI][currentJ];
+        do
         {
-            recentVisitedRooms.Clear();
-            currentDistance = 0;
-            return;
-        }
+            destinationRoom = MapManager.GetRandomRoom();
+        } while (MapManager.GetDistanceBetweenRoomsByPosition(destinationRoom, thisRoom) < jigsawSpawnDistanceBound.min);
 
-        Room currentRoom = MapManager.roomGrid[currentI][currentJ];
-        recentVisitedRooms.Add(currentRoom);
-        currentDistance++;
-        bool went = false;
 
-        if (requiredJigsawPieceDistance == currentDistance)
+        //Debug.Log("Found at " + MapManager.PositionToGridPosition(destinationRoom.transform.position));
+        FindRoom(thisRoom, destinationRoom);
+        jigsawPieceRoom = destinationRoom;
+    }
+
+    int stepCount = 0;
+    List<Room> recentVisitedRooms = new List<Room>();
+
+    private void FindRoom(Room from, Room dest)
+    {
+        if (goodPath.Count != 0) return;
+
+        if (from.transform.position == dest.transform.position)
         {
-            Debug.Log("Just got here. Required is " + requiredJigsawPieceDistance + ", current is " + currentDistance + ". List length is: " + recentVisitedRooms.Count);
-            jigsawPieceRoom = MapManager.roomGrid[currentI][currentJ];
+            recentVisitedRooms.Add(from);
+            //Debug.Log("Found in " + stepCount + " steps.");
             goodPath = new List<Room>(recentVisitedRooms);
-            return; 
+            recentVisitedRooms.Clear();
+            stepCount = 0;
+            return;
         }
-        else if(requiredJigsawPieceDistance < currentDistance)
+        if (stepCount > jigsawSpawnDistanceBound.max)
         {
             recentVisitedRooms.Clear();
-            currentDistance = 0;
+            stepCount = 0;
             return;
         }
 
-        // @Consider checking the following conditions in a randomized order to avoid overflow?
+        System.Tuple<int, int> fromCoords = MapManager.PositionToGridPosition(from.transform.position);
 
-        if(currentRoom.doors[0] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI + 1][currentJ]))
+        if (from.doors[1])
         {
-            went = true;
-            int tmp = currentDistance;
-            List<Room> tmpVisitedRooms = recentVisitedRooms;
-            GetOptimalRoomForJigsawPiece(currentI + 1, currentJ);
-            currentDistance = tmp;
-            recentVisitedRooms = new List<Room>(tmpVisitedRooms);
+            int tmp = stepCount;
+            List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
+            stepCount++;
+            recentVisitedRooms.Add(from);
+            FindRoom(MapManager.roomGrid[fromCoords.Item1 - 1][fromCoords.Item2], dest);
+            stepCount = tmp;
+            recentVisitedRooms = new List<Room>(tmpVisited);
         }
-
-        if (currentRoom.doors[1] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI - 1][currentJ]))
+        if (from.doors[0])
         {
-            went = true;
-            int tmp = currentDistance;
-            List<Room> tmpVisitedRooms = recentVisitedRooms;
-            GetOptimalRoomForJigsawPiece(currentI - 1, currentJ);
-            currentDistance = tmp;
-            recentVisitedRooms = new List<Room>(tmpVisitedRooms);
+            int tmp = stepCount;
+            List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
+            stepCount++;
+            recentVisitedRooms.Add(from);
+            FindRoom(MapManager.roomGrid[fromCoords.Item1 + 1][fromCoords.Item2], dest);
+            stepCount = tmp;
+            recentVisitedRooms = new List<Room>(tmpVisited);
         }
-
-        if (currentRoom.doors[2] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI][currentJ + 1]))
+        if (from.doors[3])
         {
-            went = true;
-            int tmp = currentDistance;
-            List<Room> tmpVisitedRooms = recentVisitedRooms;
-            GetOptimalRoomForJigsawPiece(currentI, currentJ + 1);
-            currentDistance = tmp;
-            recentVisitedRooms = new List<Room>(tmpVisitedRooms);
+            int tmp = stepCount;
+            List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
+            stepCount++;
+            recentVisitedRooms.Add(from);
+            FindRoom(MapManager.roomGrid[fromCoords.Item1][fromCoords.Item2 - 1], dest);
+            stepCount = tmp;
+            recentVisitedRooms = new List<Room>(tmpVisited);
         }
-
-        if (currentRoom.doors[3] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI][currentJ - 1]))
+        if (from.doors[2])
         {
-            went = true;
-            int tmp = currentDistance;
-            List<Room> tmpVisitedRooms = recentVisitedRooms;
-            GetOptimalRoomForJigsawPiece(currentI, currentJ - 1);
-            currentDistance = tmp;
-            recentVisitedRooms = new List<Room>(tmpVisitedRooms);
-        }
-
-        if(!went)
-        {
-            recentVisitedRooms.Clear();
-            currentDistance = 0;
+            int tmp = stepCount;
+            List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
+            stepCount++;
+            recentVisitedRooms.Add(from);
+            FindRoom(MapManager.roomGrid[fromCoords.Item1][fromCoords.Item2 + 1], dest);
+            stepCount = tmp;
+            recentVisitedRooms = new List<Room>(tmpVisited);
         }
     }
-}
+
+        /*private void GetOptimalRoomForJigsawPiece(int currentI, int currentJ)
+        {
+            if (goodPath.Count != 0)
+            {
+                recentVisitedRooms.Clear();
+                currentDistance = 0;
+                return;
+            }
+
+            Room currentRoom = MapManager.roomGrid[currentI][currentJ];
+            recentVisitedRooms.Add(currentRoom);
+            currentDistance++;
+            bool went = false;
+
+            if (requiredJigsawPieceDistance == currentDistance)
+            {
+                //Debug.Log("Just got here. Required is " + requiredJigsawPieceDistance + ", current is " + currentDistance + ". List length is: " + recentVisitedRooms.Count);
+                jigsawPieceRoom = MapManager.roomGrid[currentI][currentJ];
+                goodPath = new List<Room>(recentVisitedRooms);
+                return;
+            }
+            else if (requiredJigsawPieceDistance < currentDistance)
+            {
+                recentVisitedRooms.Clear();
+                currentDistance = 0;
+                return;
+            }
+
+            switch (Random.Range(0, 4)) 
+            {
+                case 0:
+                    if (currentRoom.doors[0] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI + 1][currentJ]))
+                    {
+                        went = true;
+                        GetOptimalRoomForJigsawPiece(currentI + 1, currentJ);
+                    }
+                    break;
+                case 1:
+                    if (currentRoom.doors[1] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI - 1][currentJ]))
+                    {
+                        went = true;
+                        GetOptimalRoomForJigsawPiece(currentI - 1, currentJ);
+                    }
+                    break;
+                case 2:
+                    if (currentRoom.doors[2] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI][currentJ + 1]))
+                    {
+                        went = true;
+                        GetOptimalRoomForJigsawPiece(currentI, currentJ + 1);
+                    }
+                    break;
+                case 3:
+                    if (currentRoom.doors[3] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI][currentJ - 1]))
+                    {
+                        went = true;
+                        GetOptimalRoomForJigsawPiece(currentI, currentJ - 1);
+                    }
+                    break;
+            }
+
+            // @Unnecessary because the same thing is checked above and no changes happen, since if recursion is triggered, went = true?
+            if(!went)
+            {
+                if (requiredJigsawPieceDistance == currentDistance)
+                {
+                    //Debug.Log("Just got here. Required is " + requiredJigsawPieceDistance + ", current is " + currentDistance + ". List length is: " + recentVisitedRooms.Count);
+                    jigsawPieceRoom = MapManager.roomGrid[currentI][currentJ];
+                    goodPath = new List<Room>(recentVisitedRooms);
+                    return;
+                }
+                recentVisitedRooms.Clear();
+                currentDistance = 0;
+            }
+        }
+        */
+    }

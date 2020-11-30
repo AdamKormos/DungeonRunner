@@ -5,6 +5,7 @@ using UnityEngine;
 public class Jigsaw : Puzzle
 {
     bool[] insertedPieces = new bool[4];
+    bool gameCompleted = false;
 
     private void OnBecameVisible()
     {
@@ -44,6 +45,13 @@ public class Jigsaw : Puzzle
             jigsawPiece.transform.position += distancePerTick;
             jigsawPiece.transform.localScale += scalePerTick;
             yield return new WaitForEndOfFrame();
+        }
+
+        gameCompleted = insertedPieces[0] && insertedPieces[1] && insertedPieces[2] && insertedPieces[3];
+
+        if(gameCompleted)
+        {
+            // ...
         }
     }
 }

@@ -26,7 +26,7 @@ public class LetterPuzzle : Puzzle
         components = new PuzzleComponent[components.Length + solution.Length];
 
         GenerateLetterTileRow();
-        CreateSolution();   
+        CreateSolution();
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ public class LetterPuzzle : Puzzle
         {
             GameObject letterTile = Instantiate(
                 sampleTileObject.gameObject,
-                transform.position + new Vector3(i * xOffsetBetweenTiles - 1.5f, 0f),
+                transform.position + new Vector3(-((xOffsetBetweenTiles / 2f) * ((float)solution.Length / 2f)) + i * xOffsetBetweenTiles, 0f),
                 Quaternion.identity,
                 this.transform);
             letterTiles.Add(letterTile.GetComponent<LetterTile>());
@@ -71,6 +71,7 @@ public class LetterPuzzle : Puzzle
     private void AddNthLetterToPuzzleComponentList(int i)
     {
         GameObject letter = Instantiate(sampleLetterObject);
+        letter.transform.position += new Vector3(0f, 0f, -8.5f);
         TextMesh[] textMeshes = letter.GetComponentsInChildren<TextMesh>(true);
         textMeshes[0].text = solution[i].ToString(); // The letter
         textMeshes[1].text = (i + 1).ToString(); // The number

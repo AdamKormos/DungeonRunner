@@ -21,7 +21,7 @@ public class SpriteAnimationPlayer : MonoBehaviour
             for(int i = 0; i < animationFrames.Length; i++)
             {
                 spriteRenderer.sprite = animationFrames[i];
-                yield return new WaitForEndOfFrame();
+                yield return new WaitForSeconds(0.1f);
             }
         }
     }

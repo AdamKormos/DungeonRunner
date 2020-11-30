@@ -39,6 +39,7 @@ public class SwitchPuzzle : Puzzle
     {
         isObstacleActive = !isObstacleActive;
         components[0].objectToSpawn.SetActive(isObstacleActive);
+        transform.Rotate(0f, 180f, 0f);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)

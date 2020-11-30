@@ -283,11 +283,15 @@ public class MapManager : MonoBehaviour
                 mergeAttemptRoomCoords = new Tuple<int, int>(i, j - 1);
             }
 
-            if (roomGrid[i][j].blockCount > 3 || mergeAttemptRoomCoords.Item1 < 0 || mergeAttemptRoomCoords.Item2 < 0 || mergeAttemptRoomCoords.Item1 >= gridSize.y || mergeAttemptRoomCoords.Item2 >= gridSize.x) return;
-            
-            //Debug.Log(roomGrid[i][j].blockCount);
+            // Against IndexOORException:
+            if (mergeAttemptRoomCoords.Item1 < 0 || mergeAttemptRoomCoords.Item2 < 0 || mergeAttemptRoomCoords.Item1 >= gridSize.y || mergeAttemptRoomCoords.Item2 >= gridSize.x) return;
 
             Room mergeAttemptRoom = roomGrid[mergeAttemptRoomCoords.Item1][mergeAttemptRoomCoords.Item2];
+
+            // Restriction of amount:
+            if (roomGrid[i][j].blockCount + mergeAttemptRoom.blockCount > 3) return;
+            
+            //Debug.Log(roomGrid[i][j].blockCount + " " + mergeAttemptRoom.blockCount);
 
             if (mergeAttemptRoom != null)
             {
@@ -319,11 +323,13 @@ public class MapManager : MonoBehaviour
 
                     recentlyMergedRoomCoords.Clear();
                     CollectRecentlyMergedRooms(i, j);
+                    foreach (Tuple<int, int> rCoords in recentlyMergedRoomCoords) roomGrid[rCoords.Item1][rCoords.Item2].blockCount++;
+
                     //Debug.Log(recentlyMergedRoomCoords.Count);
 
                     inaccessibleCoords.Remove(new Tuple<int, int>(mergeAttemptRoomCoords.Item1, mergeAttemptRoomCoords.Item2));
 
-                    if (roomGrid[i][j].blockCount < 3 && Random.Range(0, 100) < 50)
+                    if (Random.Range(0, 100) < 50)
                     {
                         SeekForMerge(mergeAttemptRoomCoords.Item1, mergeAttemptRoomCoords.Item2);
                     }
@@ -341,12 +347,11 @@ public class MapManager : MonoBehaviour
     /// <param name="fromJ"></param>
     private void CollectRecentlyMergedRooms(int fromI, int fromJ)
     {
-        roomGrid[fromI][fromJ].blockCount++;
         recentlyMergedRoomCoords.Add(new Tuple<int, int>(fromI, fromJ));
-        if (!MapManager.roomGrid[fromI][fromJ].walls[0] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI + 1, fromJ))) CollectRecentlyMergedRooms(fromI + 1, fromJ);
-        if (!MapManager.roomGrid[fromI][fromJ].walls[1] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI - 1, fromJ))) CollectRecentlyMergedRooms(fromI - 1, fromJ);
-        if (!MapManager.roomGrid[fromI][fromJ].walls[2] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI, fromJ + 1))) CollectRecentlyMergedRooms(fromI, fromJ + 1);
-        if (!MapManager.roomGrid[fromI][fromJ].walls[3] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI, fromJ - 1))) CollectRecentlyMergedRooms(fromI, fromJ - 1);
+        if (!roomGrid[fromI][fromJ].walls[0] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI + 1, fromJ))) CollectRecentlyMergedRooms(fromI + 1, fromJ);
+        if (!roomGrid[fromI][fromJ].walls[1] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI - 1, fromJ))) CollectRecentlyMergedRooms(fromI - 1, fromJ);
+        if (!roomGrid[fromI][fromJ].walls[2] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI, fromJ + 1))) CollectRecentlyMergedRooms(fromI, fromJ + 1);
+        if (!roomGrid[fromI][fromJ].walls[3] && !recentlyMergedRoomCoords.Contains(new Tuple<int, int>(fromI, fromJ - 1))) CollectRecentlyMergedRooms(fromI, fromJ - 1);
     }
 
     /// <summary>
@@ -482,6 +487,9 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    Vector2 doorLocalPositionOn1920x1080 = new Vector2(0.0776f, 0.0665f);
+    Vector2 wallLocalPositionOn1920x1080DownUp = new Vector2(0.0061f, 0.0677f);
+
     /// <summary>
     /// Creates a door object and assigns it to the given room's layout.
     /// </summary>
@@ -589,8 +597,10 @@ public class MapManager : MonoBehaviour
     /// <returns></returns>
     public static int GetDistanceBetweenRoomsByPosition(Room a, Room b)
     {
-        return Mathf.Abs(((int)Mathf.Round(a.transform.position.y / roomOffsets.y) - (int)Mathf.Round(a.transform.position.y / roomOffsets.y))) +
-            Mathf.Abs(((int)Mathf.Round(b.transform.position.x / roomOffsets.x) - (int)Mathf.Round(b.transform.position.x / roomOffsets.x)));
+        Tuple<int, int> aCoords = PositionToGridPosition(a.transform.position);
+        Tuple<int, int> bCoords = PositionToGridPosition(b.transform.position);
+
+        return Mathf.Abs(aCoords.Item1 - bCoords.Item1) + Mathf.Abs(aCoords.Item2 - bCoords.Item2);
     }
 
     /// <summary>
