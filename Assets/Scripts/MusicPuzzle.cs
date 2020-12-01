@@ -35,10 +35,17 @@ public class MusicPuzzle : Puzzle
         //OnCorrectAnswer();
     }
 
+    bool stopSolutionPlay = false;
+
     private void Update()
     {
         if (Player.enteredMusicPuzzleSubmit && !isCompleted) OnAnswerSubmitted();
         else if (Player.enteredMusicPlayerRoom) StartCoroutine(PlaySolution());
+        else if (Player.leftMusicPlayerRoom)
+        {
+            stopSolutionPlay = true;
+            audioSource.Stop();
+        }
     }
 
     /// <summary>
@@ -47,12 +54,14 @@ public class MusicPuzzle : Puzzle
     /// <returns></returns>
     private IEnumerator PlaySolution()
     {
-        for (int i = 0; i < solutionList.Length; i++)
+        for (int i = 0; i < solutionList.Length && !stopSolutionPlay; i++)
         {
             audioSource.clip = solutionList[i];
             audioSource.Play();
             yield return new WaitForSeconds(solutionList[i].length);
         }
+
+        stopSolutionPlay = false;
     }
 
     /// <summary>
@@ -65,7 +74,7 @@ public class MusicPuzzle : Puzzle
 
         for(int i = 0; i < solutionList.Length; i++)
         {
-            //solutionList[i] = sounds[Random.Range(0, sounds.Length)]; @TempRemove
+            solutionList[i] = sounds[Random.Range(0, sounds.Length)];
         }
     }
 
@@ -78,7 +87,7 @@ public class MusicPuzzle : Puzzle
         {
             GameObject musicTile = Instantiate(
                 sampleTileObject.gameObject,
-                transform.position + new Vector3(i * offsetBetweenTiles.x, 0f),
+                transform.position + new Vector3(-2f + i * offsetBetweenTiles.x, 0f),
                 Quaternion.identity,
                 this.transform);
 
@@ -99,6 +108,8 @@ public class MusicPuzzle : Puzzle
 
     protected override void OnAnswerSubmitted()
     {
+        Debug.Log("Answer submitted.");
+
         if(solutionList.Length != playerInputList.Count)
         {
             playerInputList.Clear();
@@ -109,6 +120,8 @@ public class MusicPuzzle : Puzzle
         {
             if (!solutionList[i].Equals(playerInputList[i])) return;
         }
+
+        Debug.Log("Correct answer");
 
         OnCorrectAnswer();
     }

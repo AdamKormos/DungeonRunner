@@ -85,6 +85,7 @@
     <Compile Include="Assets\Scripts\Room.cs" />
     <Compile Include="Assets\Scripts\SpriteAnimationPlayer.cs" />
     <Compile Include="Assets\Scripts\SwitchPuzzle.cs" />
+    <Compile Include="Assets\Scripts\TimeTrialAdjacentsAdjacent.cs" />
     <Compile Include="Assets\Scripts\TimeTrialArrowPuzzle.cs" />
     <Compile Include="Assets\Scripts\UI_Hint.cs" />
     <Compile Include="Assets\Scripts\Wall.cs" />

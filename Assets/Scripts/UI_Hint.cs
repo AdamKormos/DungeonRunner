@@ -18,4 +18,11 @@ public class UI_Hint : MonoBehaviour
     {
         hintText.text = hint;
     }
+
+    public static IEnumerator SetHint(string hint, float duration)
+    {
+        hintText.text = hint;
+        yield return new WaitForSeconds(duration);
+        hintText.text = "";
+    }
 }

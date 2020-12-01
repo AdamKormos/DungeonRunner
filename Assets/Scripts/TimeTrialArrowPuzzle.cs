@@ -51,18 +51,19 @@ public class TimeTrialArrowPuzzle : Puzzle
         requiredJigsawPieceDistance = Random.Range(jigsawSpawnDistanceBound.min, jigsawSpawnDistanceBound.max + 1);
         System.Tuple<int, int> thisRoomCoords = MapManager.PositionToGridPosition(transform.position);
 
-        do
-        {
-            recentVisitedRooms.Clear();
-            goodPath.Clear();
-            GetOptimalRoomForJigsawPiece(thisRoomCoords.Item1, thisRoomCoords.Item2);
-        } while (goodPath.Count < jigsawSpawnDistanceBound.min);
+        //do
+        //{
+        recentVisitedRooms.Clear();
+        goodPath.Clear();
+        Debug.Log("O");
+        GetOptimalRoomForJigsawPiece(thisRoomCoords.Item1, thisRoomCoords.Item2);
+        //} while (goodPath.Count < jigsawSpawnDistanceBound.min);
 
         Direction[] directions = TranslateAndVisualizeGoodPathToDirections();
         Debug.Log("Move amount: " + directions.Length);
-        for(int i = 0; i < directions.Length; i++)
+        for (int i = 0; i < directions.Length; i++)
         {
-            Debug.Log((i+1) + ". move: " + directions[i]);
+            Debug.Log((i + 1) + ". move: " + directions[i]);
         }
 
         StartCoroutine(PlaceAndDisplayJigsawPiece());
@@ -124,13 +125,13 @@ public class TimeTrialArrowPuzzle : Puzzle
     /// <returns></returns>
     private IEnumerator PlaceAndDisplayJigsawPiece()
     {
-        jigsawObject.transform.position = jigsawPieceRoom.transform.position + new Vector3(-Player.cameraResolutionBounds.x / 4f, + Player.cameraResolutionBounds.y / 5f, -4.0f);
+        jigsawObject.transform.position = jigsawPieceRoom.transform.position + new Vector3(-Player.cameraResolutionBounds.x / 4f, +Player.cameraResolutionBounds.y / 5f, -4.0f);
         jigsawObject.gameObject.SetActive(true);
 
         yield return new WaitForSeconds(activationDuration);
 
         jigsawObject.gameObject.SetActive(false);
-        foreach(GameObject arrowInstructionObject in arrowObjectArr)
+        foreach (GameObject arrowInstructionObject in arrowObjectArr)
         {
             Destroy(arrowInstructionObject);
         }
@@ -150,11 +151,11 @@ public class TimeTrialArrowPuzzle : Puzzle
         do
         {
             destinationRoom = MapManager.GetRandomRoom();
-        } while (MapManager.GetDistanceBetweenRoomsByPosition(destinationRoom, thisRoom) < jigsawSpawnDistanceBound.min);
+            FindRoom(thisRoom, destinationRoom);
+        } while (MapManager.GetDistanceBetweenRoomsByPosition(destinationRoom, thisRoom) < jigsawSpawnDistanceBound.min || goodPath.Count < 2);
 
 
         //Debug.Log("Found at " + MapManager.PositionToGridPosition(destinationRoom.transform.position));
-        FindRoom(thisRoom, destinationRoom);
         jigsawPieceRoom = destinationRoom;
     }
 
@@ -183,7 +184,7 @@ public class TimeTrialArrowPuzzle : Puzzle
 
         System.Tuple<int, int> fromCoords = MapManager.PositionToGridPosition(from.transform.position);
 
-        if (from.doors[1])
+        if (from.doors[1] && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1 - 1][fromCoords.Item2]))
         {
             int tmp = stepCount;
             List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
@@ -193,7 +194,7 @@ public class TimeTrialArrowPuzzle : Puzzle
             stepCount = tmp;
             recentVisitedRooms = new List<Room>(tmpVisited);
         }
-        if (from.doors[0])
+        if (from.doors[0] && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1 + 1][fromCoords.Item2]))
         {
             int tmp = stepCount;
             List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
@@ -203,7 +204,7 @@ public class TimeTrialArrowPuzzle : Puzzle
             stepCount = tmp;
             recentVisitedRooms = new List<Room>(tmpVisited);
         }
-        if (from.doors[3])
+        if (from.doors[3] && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1][fromCoords.Item2 - 1]))
         {
             int tmp = stepCount;
             List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
@@ -213,7 +214,7 @@ public class TimeTrialArrowPuzzle : Puzzle
             stepCount = tmp;
             recentVisitedRooms = new List<Room>(tmpVisited);
         }
-        if (from.doors[2])
+        if (from.doors[2] && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1][fromCoords.Item2 + 1]))
         {
             int tmp = stepCount;
             List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
@@ -224,80 +225,4 @@ public class TimeTrialArrowPuzzle : Puzzle
             recentVisitedRooms = new List<Room>(tmpVisited);
         }
     }
-
-        /*private void GetOptimalRoomForJigsawPiece(int currentI, int currentJ)
-        {
-            if (goodPath.Count != 0)
-            {
-                recentVisitedRooms.Clear();
-                currentDistance = 0;
-                return;
-            }
-
-            Room currentRoom = MapManager.roomGrid[currentI][currentJ];
-            recentVisitedRooms.Add(currentRoom);
-            currentDistance++;
-            bool went = false;
-
-            if (requiredJigsawPieceDistance == currentDistance)
-            {
-                //Debug.Log("Just got here. Required is " + requiredJigsawPieceDistance + ", current is " + currentDistance + ". List length is: " + recentVisitedRooms.Count);
-                jigsawPieceRoom = MapManager.roomGrid[currentI][currentJ];
-                goodPath = new List<Room>(recentVisitedRooms);
-                return;
-            }
-            else if (requiredJigsawPieceDistance < currentDistance)
-            {
-                recentVisitedRooms.Clear();
-                currentDistance = 0;
-                return;
-            }
-
-            switch (Random.Range(0, 4)) 
-            {
-                case 0:
-                    if (currentRoom.doors[0] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI + 1][currentJ]))
-                    {
-                        went = true;
-                        GetOptimalRoomForJigsawPiece(currentI + 1, currentJ);
-                    }
-                    break;
-                case 1:
-                    if (currentRoom.doors[1] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI - 1][currentJ]))
-                    {
-                        went = true;
-                        GetOptimalRoomForJigsawPiece(currentI - 1, currentJ);
-                    }
-                    break;
-                case 2:
-                    if (currentRoom.doors[2] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI][currentJ + 1]))
-                    {
-                        went = true;
-                        GetOptimalRoomForJigsawPiece(currentI, currentJ + 1);
-                    }
-                    break;
-                case 3:
-                    if (currentRoom.doors[3] && !recentVisitedRooms.Contains(MapManager.roomGrid[currentI][currentJ - 1]))
-                    {
-                        went = true;
-                        GetOptimalRoomForJigsawPiece(currentI, currentJ - 1);
-                    }
-                    break;
-            }
-
-            // @Unnecessary because the same thing is checked above and no changes happen, since if recursion is triggered, went = true?
-            if(!went)
-            {
-                if (requiredJigsawPieceDistance == currentDistance)
-                {
-                    //Debug.Log("Just got here. Required is " + requiredJigsawPieceDistance + ", current is " + currentDistance + ". List length is: " + recentVisitedRooms.Count);
-                    jigsawPieceRoom = MapManager.roomGrid[currentI][currentJ];
-                    goodPath = new List<Room>(recentVisitedRooms);
-                    return;
-                }
-                recentVisitedRooms.Clear();
-                currentDistance = 0;
-            }
-        }
-        */
-    }
+}

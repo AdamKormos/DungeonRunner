@@ -29,7 +29,7 @@ public class ClockPuzzle : Puzzle
 
         {
             littleHand = Instantiate(new GameObject(), this.transform);
-            littleHand.transform.position += new Vector3(0f, 0f, -1.5f);
+            littleHand.transform.position += new Vector3(0f, 0f, -0.5f);
             littleHand.transform.localScale += new Vector3(0f, -0.5f, 0f);
             littleHand.name = "LittleHand";
             SpriteRenderer spriteRenderer = littleHand.AddComponent<SpriteRenderer>();
@@ -38,7 +38,7 @@ public class ClockPuzzle : Puzzle
 
         {
             bigHand = Instantiate(new GameObject(), this.transform);
-            bigHand.transform.position += new Vector3(0f, 0f, -1.5f);
+            bigHand.transform.position += new Vector3(0f, 0f, -0.5f);
             bigHand.name = "BigHand";
             SpriteRenderer spriteRenderer = bigHand.AddComponent<SpriteRenderer>();
             spriteRenderer.sprite = handSprite;

@@ -194,9 +194,13 @@ public class Player : MonoBehaviour
             collision.GetComponent<BoxCollider2D>().enabled = false;
             collision.GetComponent<SpriteRenderer>().enabled = false;
         }
-        else if(collision.GetComponent<MemoryTile>())
+        else if (collision.GetComponent<MemoryTile>())
         {
             collision.GetComponent<MemoryTile>().OnPlayerEnter();
+        }
+        else if (collision.GetComponent<MusicTile>())
+        {
+            collision.GetComponent<MusicTile>().OnPlayerEnter();
         }
         else if (collision.CompareTag("MemoryGridSubmitTile"))
         {
@@ -236,6 +240,7 @@ public class Player : MonoBehaviour
     public static bool enteredMemoryGridSubmit { get; private set; }
     public static bool enteredMusicPuzzleSubmit { get; private set; }
     public static bool enteredLetterPuzzleSubmit { get; private set; }
+    public static bool leftMusicPlayerRoom { get; private set; }
     public static bool enteredMusicPlayerRoom { get; private set; } // where the sounds for music puzzle get played in the correct order
     public static bool startedTimeTrialArrowPuzzle { get; private set; }
 
@@ -262,9 +267,21 @@ public class Player : MonoBehaviour
 
     private IEnumerator TogglePuzzleBool_MusicPlayerRoom()
     {
+        if (!enteredMusicPlayerRoomPreviously)
+        {
+            enteredMusicPlayerRoomPreviously = true;
+            StartCoroutine(UI_Hint.SetHint("Listen to the tone being played. Then, find the room with tiles that play similar sounds and repeat the sounds in order!", 5f));
+        }
         enteredMusicPlayerRoom = true;
         yield return new WaitForEndOfFrame();
         enteredMusicPlayerRoom = false;
+    }
+
+    private IEnumerator TogglePuzzleBool_MusicPlayerRoomLeave()
+    {
+        leftMusicPlayerRoom = true;
+        yield return new WaitForEndOfFrame();
+        leftMusicPlayerRoom = false;
     }
 
     private IEnumerator TogglePuzzleBool_LetterPuzzle()
@@ -296,6 +313,15 @@ public class Player : MonoBehaviour
             r.transform.position = new Vector3(r.transform.position.x, r.transform.position.y, -5f);
         }
 
+        if (MusicPuzzle.musicPlayerRoomCoords != null)
+        {
+            if (currentRooms.Contains(MapManager.roomGrid[MusicPuzzle.musicPlayerRoomCoords.Item1][MusicPuzzle.musicPlayerRoomCoords.Item2]))
+            {
+                leftMusicPlayerRoom = true;
+                StartCoroutine(TogglePuzzleBool_MusicPlayerRoomLeave());
+            }
+        }
+
         previousRoomI = currentRoomI;
         previousRoomJ = currentRoomJ;
     }
@@ -305,6 +331,8 @@ public class Player : MonoBehaviour
     /// </summary>
     private void OnDoorLeave()
     {
+        UI_Hint.SetHint("");
+
         SetCurrentRooms();
         //Debug.Log(currentRooms.Count);
         foreach (Room r in currentRooms)
@@ -314,9 +342,15 @@ public class Player : MonoBehaviour
 
         if (MusicPuzzle.musicPlayerRoomCoords != null)
         {
-            if (currentRoomI == MusicPuzzle.musicPlayerRoomCoords.Item1 && currentRoomJ == MusicPuzzle.musicPlayerRoomCoords.Item2) StartCoroutine(TogglePuzzleBool_MusicPlayerRoom());
+            if (currentRooms.Contains(MapManager.roomGrid[MusicPuzzle.musicPlayerRoomCoords.Item1][MusicPuzzle.musicPlayerRoomCoords.Item2]))
+            {
+                enteredMusicPlayerRoom = true;
+                StartCoroutine(TogglePuzzleBool_MusicPlayerRoom());
+            }
         }
     }
+
+    bool enteredMusicPlayerRoomPreviously = false;
 
     /// <summary>
     /// Sets the current rooms by casting the player position to grid position.
