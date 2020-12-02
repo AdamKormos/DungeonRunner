@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\Bound.cs" />
     <Compile Include="Assets\Scripts\ClockPuzzle.cs" />
     <Compile Include="Assets\Scripts\Door.cs" />
+    <Compile Include="Assets\Scripts\GameMenuUI.cs" />
     <Compile Include="Assets\Scripts\Jigsaw.cs" />
     <Compile Include="Assets\Scripts\JigsawPiece.cs" />
     <Compile Include="Assets\Scripts\JigsawPieceHolder.cs" />

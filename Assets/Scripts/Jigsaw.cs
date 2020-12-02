@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Jigsaw : Puzzle
 {
@@ -51,7 +52,17 @@ public class Jigsaw : Puzzle
 
         if(gameCompleted)
         {
-            // ...
+            StartCoroutine(UI_Hint.SetHint("Game completed! Congratulations, I hope you had fun! Press [Enter] to go to the main menu.", 10f));
+            StartCoroutine(ListenForEnterToReload());
+        }
+    }
+
+    private IEnumerator ListenForEnterToReload()
+    {
+        while(gameCompleted)
+        {
+            if (Input.GetKeyDown(KeyCode.Return)) SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            yield return new WaitForSeconds(0.1f);
         }
     }
 }

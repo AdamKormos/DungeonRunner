@@ -55,7 +55,6 @@ public class TimeTrialArrowPuzzle : Puzzle
         //{
         recentVisitedRooms.Clear();
         goodPath.Clear();
-        Debug.Log("O");
         GetOptimalRoomForJigsawPiece(thisRoomCoords.Item1, thisRoomCoords.Item2);
         //} while (goodPath.Count < jigsawSpawnDistanceBound.min);
 
@@ -146,13 +145,22 @@ public class TimeTrialArrowPuzzle : Puzzle
     /// <returns></returns>
     private void GetOptimalRoomForJigsawPiece(int currentI, int currentJ)
     {
-        Room destinationRoom = default;
+        Room destinationRoom = MapManager.GetRandomRoom();
         Room thisRoom = MapManager.roomGrid[currentI][currentJ];
-        do
+
+        while (MapManager.GetDistanceBetweenRoomsByPosition(destinationRoom, thisRoom) < jigsawSpawnDistanceBound.min || destinationRoom.blockCount > 1 || destinationRoom.GetDoorCount() < 2)
         {
+            //Debug.Log("RoomFindIteration");
             destinationRoom = MapManager.GetRandomRoom();
-            FindRoom(thisRoom, destinationRoom);
-        } while (MapManager.GetDistanceBetweenRoomsByPosition(destinationRoom, thisRoom) < jigsawSpawnDistanceBound.min || goodPath.Count < 2);
+        }
+
+        while (goodPath.Count < 2)
+        {
+            //Debug.Log("PathfindIteration");
+            FindRoom(destinationRoom, thisRoom);
+        }
+
+        //Debug.Log(MapManager.PositionToGridPosition(destinationRoom.transform.position));
 
 
         //Debug.Log("Found at " + MapManager.PositionToGridPosition(destinationRoom.transform.position));
@@ -175,17 +183,13 @@ public class TimeTrialArrowPuzzle : Puzzle
             stepCount = 0;
             return;
         }
-        if (stepCount > jigsawSpawnDistanceBound.max)
-        {
-            recentVisitedRooms.Clear();
-            stepCount = 0;
-            return;
-        }
 
         System.Tuple<int, int> fromCoords = MapManager.PositionToGridPosition(from.transform.position);
+        bool went = false;
 
-        if (from.doors[1] && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1 - 1][fromCoords.Item2]))
+        if ((from.doors[1]) && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1 - 1][fromCoords.Item2]))
         {
+            went = true;
             int tmp = stepCount;
             List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
             stepCount++;
@@ -194,8 +198,9 @@ public class TimeTrialArrowPuzzle : Puzzle
             stepCount = tmp;
             recentVisitedRooms = new List<Room>(tmpVisited);
         }
-        if (from.doors[0] && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1 + 1][fromCoords.Item2]))
+        if ((from.doors[0]) && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1 + 1][fromCoords.Item2]))
         {
+            went = true;
             int tmp = stepCount;
             List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
             stepCount++;
@@ -204,8 +209,9 @@ public class TimeTrialArrowPuzzle : Puzzle
             stepCount = tmp;
             recentVisitedRooms = new List<Room>(tmpVisited);
         }
-        if (from.doors[3] && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1][fromCoords.Item2 - 1]))
+        if ((from.doors[3]) && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1][fromCoords.Item2 - 1]))
         {
+            went = true;
             int tmp = stepCount;
             List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
             stepCount++;
@@ -214,8 +220,9 @@ public class TimeTrialArrowPuzzle : Puzzle
             stepCount = tmp;
             recentVisitedRooms = new List<Room>(tmpVisited);
         }
-        if (from.doors[2] && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1][fromCoords.Item2 + 1]))
+        if ((from.doors[2]) && !recentVisitedRooms.Contains(MapManager.roomGrid[fromCoords.Item1][fromCoords.Item2 + 1]))
         {
+            went = true;
             int tmp = stepCount;
             List<Room> tmpVisited = new List<Room>(recentVisitedRooms);
             stepCount++;
@@ -223,6 +230,13 @@ public class TimeTrialArrowPuzzle : Puzzle
             FindRoom(MapManager.roomGrid[fromCoords.Item1][fromCoords.Item2 + 1], dest);
             stepCount = tmp;
             recentVisitedRooms = new List<Room>(tmpVisited);
+        }
+
+        if(!went)
+        {
+            recentVisitedRooms.Clear();
+            stepCount = 0;
+            return;
         }
     }
 }

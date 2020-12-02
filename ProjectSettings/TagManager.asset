@@ -10,6 +10,7 @@ TagManager:
   - LetterPuzzleUpArrow
   - LetterPuzzleDownArrow
   - TimeTrialArrowStartTile
+  - TimeTrialAAStartTile
   layers:
   - Default
   - TransparentFX

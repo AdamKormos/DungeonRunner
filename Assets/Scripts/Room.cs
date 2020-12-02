@@ -43,6 +43,25 @@ public class Room : MonoBehaviour
     /// <returns></returns>
     public bool HasAnyDoors() { return doors[0] || doors[1] || doors[2] || doors[3]; }
 
+    public int GetDoorCount()
+    {
+        int count = 0;
+        foreach (bool door in doors) if (door) count++;
+        return count;
+    }
+
+    /// <summary>
+    /// Same as GetDoorCount() but includes sides where walls don't exist.
+    /// </summary>
+    /// <returns></returns>
+    public int GetEntranceCount()
+    {
+        int count = 0;
+        foreach (bool door in doors) if (door) count++;
+        foreach (bool wall in walls) if (!wall) count++;
+        return count;
+    }
+
     /// <summary>
     /// Gets the door of the given direction.
     /// </summary>
@@ -111,5 +130,16 @@ public class Room : MonoBehaviour
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// Determines whether the given two rooms are adjacent or not.
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public static bool AreNeighbours(Room a, Room b)
+    {
+        return MapManager.GetDistanceBetweenRoomsByPosition(a, b) == 1;
     }
 }

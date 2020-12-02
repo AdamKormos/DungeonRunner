@@ -56,7 +56,7 @@ public class Player : MonoBehaviour
         //if (Input.GetKeyDown(KeyCode.Space)) StartCoroutine(A());
 
         //Debug.Log(MapManager.currentRoom.blockCount);
-        FollowMouseMovement();
+        if(!GameMenuUI.isUIActive) FollowMouseMovement();
         DetermineCameraMovement();
     }
 
@@ -226,6 +226,10 @@ public class Player : MonoBehaviour
         {
             StartCoroutine(TogglePuzzleBool_TimeTrialArrow());
         }
+        else if (collision.CompareTag("TimeTrialAAStartTile"))
+        {
+            StartCoroutine(TogglePuzzleBool_TimeTrialAdjacentsAdjacent());
+        }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
@@ -243,12 +247,31 @@ public class Player : MonoBehaviour
     public static bool leftMusicPlayerRoom { get; private set; }
     public static bool enteredMusicPlayerRoom { get; private set; } // where the sounds for music puzzle get played in the correct order
     public static bool startedTimeTrialArrowPuzzle { get; private set; }
+    public static bool startedTimeTrialAA { get; private set; }
+    bool enteredMusicPlayerRoomPreviously = false, enteredTTArrowPreviously = false, enteredTTAAPreviously = false;
 
     private IEnumerator TogglePuzzleBool_TimeTrialArrow()
     {
+        if (!enteredTTArrowPreviously)
+        {
+            enteredTTArrowPreviously = true;
+            StartCoroutine(UI_Hint.SetHint("Follow the arrow instructions and reach the room which contains the jigsaw piece before you run out of time!", 8f));
+        }
         startedTimeTrialArrowPuzzle = true;
         yield return new WaitForEndOfFrame();
         startedTimeTrialArrowPuzzle = false;
+    }
+
+    private IEnumerator TogglePuzzleBool_TimeTrialAdjacentsAdjacent()
+    {
+        if (!enteredTTAAPreviously)
+        {
+            enteredTTAAPreviously = true;
+            StartCoroutine(UI_Hint.SetHint("A jigsaw piece has spawned in one of this room's adjacent room's adjacents. Find it, quickly!", 8f));
+        }
+        startedTimeTrialAA = true;
+        yield return new WaitForEndOfFrame();
+        startedTimeTrialAA = false;
     }
 
     private IEnumerator TogglePuzzleBool_MemoryGrid()
@@ -270,7 +293,7 @@ public class Player : MonoBehaviour
         if (!enteredMusicPlayerRoomPreviously)
         {
             enteredMusicPlayerRoomPreviously = true;
-            StartCoroutine(UI_Hint.SetHint("Listen to the tone being played. Then, find the room with tiles that play similar sounds and repeat the sounds in order!", 5f));
+            StartCoroutine(UI_Hint.SetHint("Listen to the tone being played. Then, find the room with tiles that play similar sounds and repeat the sounds in order!", 8f));
         }
         enteredMusicPlayerRoom = true;
         yield return new WaitForEndOfFrame();
@@ -349,8 +372,6 @@ public class Player : MonoBehaviour
             }
         }
     }
-
-    bool enteredMusicPlayerRoomPreviously = false;
 
     /// <summary>
     /// Sets the current rooms by casting the player position to grid position.
