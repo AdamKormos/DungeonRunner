@@ -1,16 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class SwitchPuzzle : Puzzle
 {
     bool isPlayerInRange = false;
     bool isObstacleActive = true;
+    public static Tuple<int, int> gridPos { get; private set; }
 
     private void Start()
     {
         if (jigsawPieceDict.ContainsKey(this))
         {
+            gridPos = MapManager.PositionToGridPosition(transform.position);
             // components[0] = jigsaw piece
             components[0].objectToSpawn.SetActive(isObstacleActive);
 
@@ -22,6 +25,8 @@ public class SwitchPuzzle : Puzzle
             jigsawObject.transform.parent = this.transform;
             jigsawObject.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
             jigsawObject.GetComponent<BoxCollider2D>().size = new Vector2(0.6f, 0.6f);
+
+            GetComponentInChildren<TextMesh>(true).gameObject.SetActive(false);
         }
         else
         {
@@ -40,14 +45,17 @@ public class SwitchPuzzle : Puzzle
         isObstacleActive = !isObstacleActive;
         components[0].objectToSpawn.SetActive(isObstacleActive);
         transform.Rotate(0f, 180f, 0f);
+
+        GameObject textMeshObject = GetComponentInChildren<TextMesh>(true).gameObject;
+        textMeshObject.transform.position = new Vector3(textMeshObject.transform.position.x * -1, textMeshObject.transform.position.y, textMeshObject.transform.position.z);
+        textMeshObject.transform.Rotate(0f, 180, 0f);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.GetComponent<Player>())
         {
-            Player.madeHintEnableOnTriggerEnter = true;
-            UI_Hint.SetHint("[Enter] - Pull switch");
+            GetComponentInChildren<TextMesh>(true).gameObject.SetActive(true);
             isPlayerInRange = true;
             //Debug.Log("P");
         }
@@ -55,6 +63,10 @@ public class SwitchPuzzle : Puzzle
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.GetComponent<Player>()) isPlayerInRange = false;
+        if (collision.GetComponent<Player>())
+        {
+            GetComponentInChildren<TextMesh>(true).gameObject.SetActive(false);
+            isPlayerInRange = false;
+        }
     }
 }

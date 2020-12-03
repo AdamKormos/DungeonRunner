@@ -1,11 +1,18 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class BallPuzzle : Puzzle
 {
     [SerializeField] Transform jigsawPieceTransform = default;
     bool isCompleted = false;
+    public static Tuple<int, int> gridPos { get; private set; }
+
+    private void Start()
+    {
+        gridPos = MapManager.PositionToGridPosition(transform.position);
+    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {

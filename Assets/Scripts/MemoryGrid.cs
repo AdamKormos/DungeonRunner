@@ -12,14 +12,19 @@ public class MemoryGrid : Puzzle
     int redTileI, redTileJ;
     static List<Color> solutionList = new List<Color>();
     bool isCompleted = false;
+    public static Tuple<int, int> gridPos { get; private set; }
 
     // Start is called before the first frame update
     void Start()
     {
-        offsetBetweenTiles = sampleTileObject.GetComponent<SpriteRenderer>().bounds.size;
-        PickRedTileCoords();
-        GenerateGrid();
-
+        if (jigsawPieceDict.ContainsKey(this))
+        {
+            gridPos = MapManager.PositionToGridPosition(transform.position);
+            offsetBetweenTiles = sampleTileObject.GetComponent<SpriteRenderer>().bounds.size;
+            PickRedTileCoords();
+            GenerateGrid();
+        }
+        else gameObject.SetActive(false);
         //OnCorrectAnswer();
     }
 

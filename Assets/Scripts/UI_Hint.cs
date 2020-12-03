@@ -22,6 +22,6 @@ public class UI_Hint : MonoBehaviour
     {
         hintText.text = hint;
         yield return new WaitForSeconds(duration);
-        hintText.text = "";
+        if(hintText.text.Equals(hint)) hintText.text = ""; // If there was no other coroutine that changed its value previously. Because if so, this would make that one's appearance shorter.
     }
 }

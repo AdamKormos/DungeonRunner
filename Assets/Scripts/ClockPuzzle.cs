@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using Random = UnityEngine.Random;
 
 public class ClockPuzzle : Puzzle
 {
@@ -8,7 +10,9 @@ public class ClockPuzzle : Puzzle
     [SerializeField] Sprite handSprite = default;
     GameObject littleHand = default, bigHand = default;
     JigsawPiece jigsawObject = default;
-    int puzzleActivityHour;
+    public static int puzzleActivityHour { get; private set; }
+    public static Tuple<int, int> gridPos { get; private set; }
+    public static Tuple<int, int> jigsawSpawnGridPos { get; private set; }
 
     // Start is called before the first frame update
     void Start()
@@ -24,12 +28,15 @@ public class ClockPuzzle : Puzzle
             jigsawObject.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
             jigsawObject.GetComponent<BoxCollider2D>().size = new Vector2(0.6f, 0.6f);
             jigsawObject.gameObject.SetActive(false);
+
+            gridPos = MapManager.PositionToGridPosition(transform.position);
+            jigsawSpawnGridPos = MapManager.PositionToGridPosition(jigsawObject.transform.position);
         }
         else components[0].objectToSpawn.SetActive(false);
 
         {
             littleHand = Instantiate(new GameObject(), this.transform);
-            littleHand.transform.position += new Vector3(0f, 0f, -0.5f);
+            littleHand.transform.position += new Vector3(0f, 0f, -0.25f);
             littleHand.transform.localScale += new Vector3(0f, -0.5f, 0f);
             littleHand.name = "LittleHand";
             SpriteRenderer spriteRenderer = littleHand.AddComponent<SpriteRenderer>();
@@ -38,7 +45,7 @@ public class ClockPuzzle : Puzzle
 
         {
             bigHand = Instantiate(new GameObject(), this.transform);
-            bigHand.transform.position += new Vector3(0f, 0f, -0.5f);
+            bigHand.transform.position += new Vector3(0f, 0f, -0.25f);
             bigHand.name = "BigHand";
             SpriteRenderer spriteRenderer = bigHand.AddComponent<SpriteRenderer>();
             spriteRenderer.sprite = handSprite;

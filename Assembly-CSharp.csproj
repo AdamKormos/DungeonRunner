@@ -77,6 +77,7 @@
     <Compile Include="Assets\Scripts\MapManager.cs" />
     <Compile Include="Assets\Scripts\MemoryGrid.cs" />
     <Compile Include="Assets\Scripts\MemoryTile.cs" />
+    <Compile Include="Assets\Scripts\Minimap.cs" />
     <Compile Include="Assets\Scripts\MousePointer.cs" />
     <Compile Include="Assets\Scripts\MusicPuzzle.cs" />
     <Compile Include="Assets\Scripts\MusicTile.cs" />

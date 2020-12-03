@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 /// <summary>
 /// @EarlyExec Executes earlier than supposed to by -50.
@@ -16,17 +18,21 @@ public class LetterPuzzle : Puzzle
     int originalComponentsLength = 0;
     float xOffsetBetweenTiles = 0f;
     List<LetterTile> letterTiles = new List<LetterTile>();
+    public static Tuple<int, int> gridPos { get; private set; }
 
     // Start is called before the first frame update
     void Start()
     {
+
+        gridPos = MapManager.PositionToGridPosition(transform.position);
         xOffsetBetweenTiles = sampleTileObject.GetComponent<MeshRenderer>().bounds.size.x * 2f;
         originalComponentsLength = components.Length;
-        solution = new char[Random.Range(letterAmountRange.min, letterAmountRange.max+1)];
+        solution = new char[Random.Range(letterAmountRange.min, letterAmountRange.max + 1)];
         components = new PuzzleComponent[components.Length + solution.Length];
 
         GenerateLetterTileRow();
         CreateSolution();
+
     }
 
     /// <summary>

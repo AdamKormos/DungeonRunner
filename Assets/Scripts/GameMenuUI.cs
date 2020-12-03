@@ -22,7 +22,9 @@ public class GameMenuUI : MonoBehaviour
         menuButtons[currentMenuButtonIndex].GetComponent<Image>().color = selectedButtonColor;
 
 #if UNITY_EDITOR
-        PlayerPrefs.DeleteKey("EnteredPreviously");
+        //PlayerPrefs.DeleteKey("EnteredPreviously");
+        isUIActive = false;
+        gameObject.SetActive(false);
 #endif
 
         firstTimeIn = (PlayerPrefs.GetInt("EnteredPreviously", 0) == 0);

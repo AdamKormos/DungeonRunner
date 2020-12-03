@@ -1,14 +1,17 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Ball : MonoBehaviour
 {
-    Rigidbody2D rigidbody = default;
-
+    new Rigidbody2D rigidbody = default;
+    public static Tuple<int, int> gridPos { get; private set; }
+    
     // Start is called before the first frame update
     void Start()
     {
+        gridPos = MapManager.PositionToGridPosition(transform.position);
         rigidbody = GetComponent<Rigidbody2D>();
         transform.localScale = new Vector3(transform.localScale.x / transform.parent.lossyScale.x, transform.localScale.y / transform.parent.lossyScale.y);
     }

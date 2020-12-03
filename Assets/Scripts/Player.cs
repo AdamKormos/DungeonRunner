@@ -32,21 +32,6 @@ public class Player : MonoBehaviour
         //StartCoroutine(A());
     }
 
-    /// <summary>
-    /// Debug method to automatically assign a jigsaw piece (spawned with a debug method too, which is already deleted).
-    /// </summary>
-    /// <returns></returns>
-    IEnumerator A()
-    {
-        yield return new WaitForEndOfFrame();
-        JigsawPiece obj = FindObjectOfType<JigsawPiece>();
-        collectedPieces.Add(obj);
-        obj.transform.parent = this.transform;
-        obj.transform.localPosition = Vector2.zero;
-        obj.GetComponent<BoxCollider2D>().enabled = false;
-        obj.GetComponent<SpriteRenderer>().enabled = false;
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -163,8 +148,6 @@ public class Player : MonoBehaviour
         rigidbody.AddForce(transform.forward);
     }
 
-    public static bool madeHintEnableOnTriggerEnter = false;
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (checksForDoorTrigger && collision.GetComponent<Door>())
@@ -204,11 +187,11 @@ public class Player : MonoBehaviour
         }
         else if (collision.CompareTag("MemoryGridSubmitTile"))
         {
-            StartCoroutine(TogglePuzzleBool_MemoryGrid());
+            StartCoroutine(TogglePuzzleBool_MemoryGridSubmit());
         }
         else if (collision.CompareTag("MusicPuzzleSubmitTile"))
         {
-            StartCoroutine(TogglePuzzleBool_MusicPuzzle());
+            StartCoroutine(TogglePuzzleBool_MusicPuzzleSubmit());
         }
         else if(collision.CompareTag("LetterPuzzleSubmitTile"))
         {
@@ -232,12 +215,101 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    /// <summary>
+    /// Called when the player enters a door. Moves the previous room behind the Z position that should be used for current rooms.
+    /// </summary>
+    private void OnDoorEnter()
     {
-        if(madeHintEnableOnTriggerEnter)
+        foreach (Room r in currentRooms)
         {
-            madeHintEnableOnTriggerEnter = false;
+            r.transform.position = new Vector3(r.transform.position.x, r.transform.position.y, -5f);
+        }
+
+        // Uses previous room's coordinates:
+        if (MusicPuzzle.musicPlayerRoomCoords != null)
+        {
+            if (currentRooms.Contains(MapManager.roomGrid[MusicPuzzle.musicPlayerRoomCoords.Item1][MusicPuzzle.musicPlayerRoomCoords.Item2]))
+            {
+                leftMusicPlayerRoom = true;
+                StartCoroutine(TogglePuzzleBool_MusicPlayerRoomLeave());
+            }
+        }
+
+        previousRoomI = currentRoomI;
+        previousRoomJ = currentRoomJ;
+    }
+
+    /// <summary>
+    /// Called when the player leaves the door (after movementAfterDoor position is applied). Moves the current room to the Z position that should be used for current rooms.
+    /// </summary>
+    private void OnDoorLeave()
+    {
+        if (!GameMenuUI.isUIActive)
+        {
             UI_Hint.SetHint("");
+
+            SetCurrentRooms();
+            //Debug.Log(currentRooms.Count);
+            foreach (Room r in currentRooms)
+            {
+                r.transform.position = new Vector3(r.transform.position.x, r.transform.position.y, -8f);
+            }
+
+            // Using new (actually, current) room's coordinates:
+            if (MusicPuzzle.musicPlayerRoomCoords != null && currentRoomI == MusicPuzzle.musicPlayerRoomCoords.Item1 && currentRoomJ == MusicPuzzle.musicPlayerRoomCoords.Item2)
+            {
+                enteredMusicPlayerRoom = true;
+                StartCoroutine(TogglePuzzleBool_MusicPlayerRoom());
+            }
+            else if (MemoryGrid.gridPos != null && currentRoomI == MemoryGrid.gridPos.Item1 && currentRoomJ == MemoryGrid.gridPos.Item2)
+            {
+                if (!enteredMemoryGridRoomPreviously)
+                {
+                    enteredMemoryGridRoomPreviously = true;
+                    StartCoroutine(UI_Hint.SetHint("Color the tiles in the right way! Red means this puzzle's position, the rest are other rooms nearby. Black means that there is no room, " +
+                        "white means that a room exists at the given position. Once you're done, step on the button!", 10f));
+                }
+            }
+            else if (LetterPuzzle.gridPos != null && currentRoomI == LetterPuzzle.gridPos.Item1 && currentRoomJ == LetterPuzzle.gridPos.Item2)
+            {
+                if (!enteredLetterPuzzleRoomPreviously)
+                {
+                    enteredLetterPuzzleRoomPreviously = true;
+                    StartCoroutine(UI_Hint.SetHint("Find the letters across the map and write them in order! There is a number above each, to make your life easier.", 4f));
+                }
+            }
+            else if (ClockPuzzle.jigsawSpawnGridPos != null && currentRoomI == ClockPuzzle.jigsawSpawnGridPos.Item1 && currentRoomJ == ClockPuzzle.jigsawSpawnGridPos.Item2)
+            {
+                if (!enteredClockJigsawSpawnRoomPreviously)
+                {
+                    enteredClockJigsawSpawnRoomPreviously = true;
+                    StartCoroutine(UI_Hint.SetHint("A jigsaw piece spawns here when it's " + ClockPuzzle.puzzleActivityHour + " o'clock.", 4f));
+                }
+            }
+            else if (SwitchPuzzle.gridPos != null && currentRoomI == SwitchPuzzle.gridPos.Item1 && currentRoomJ == SwitchPuzzle.gridPos.Item2)
+            {
+                if (!enteredSwitchPreviously)
+                {
+                    enteredSwitchPreviously = true;
+                    StartCoroutine(UI_Hint.SetHint("Pulling this switch may destroy an obstacle around a jigsaw piece.", 4f));
+                }
+            }
+            else if (BallPuzzle.gridPos != null && currentRoomI == BallPuzzle.gridPos.Item1 && currentRoomJ == BallPuzzle.gridPos.Item2)
+            {
+                if (!enteredBallPuzzleRoomPreviously)
+                {
+                    enteredBallPuzzleRoomPreviously = true;
+                    StartCoroutine(UI_Hint.SetHint("Find a ball and get it into this hole!", 4f));
+                }
+            }
+            else if (Ball.gridPos != null && currentRoomI == Ball.gridPos.Item1 && currentRoomJ == Ball.gridPos.Item2)
+            {
+                if (!enteredBallRoomPreviously)
+                {
+                    enteredBallRoomPreviously = true;
+                    StartCoroutine(UI_Hint.SetHint("Find a hole somewhere on the map, and make the ball go into it!", 10f));
+                }
+            }
         }
     }
 
@@ -248,7 +320,9 @@ public class Player : MonoBehaviour
     public static bool enteredMusicPlayerRoom { get; private set; } // where the sounds for music puzzle get played in the correct order
     public static bool startedTimeTrialArrowPuzzle { get; private set; }
     public static bool startedTimeTrialAA { get; private set; }
-    bool enteredMusicPlayerRoomPreviously = false, enteredTTArrowPreviously = false, enteredTTAAPreviously = false;
+    bool enteredMusicPlayerRoomPreviously = false, enteredTTArrowPreviously = false, enteredTTAAPreviously = false, enteredMemoryGridRoomPreviously = false, 
+        enteredLetterPuzzleRoomPreviously = false, enteredClockJigsawSpawnRoomPreviously = false, enteredSwitchPreviously = false, 
+        enteredBallRoomPreviously = false, enteredBallPuzzleRoomPreviously = false;
 
     private IEnumerator TogglePuzzleBool_TimeTrialArrow()
     {
@@ -274,14 +348,14 @@ public class Player : MonoBehaviour
         startedTimeTrialAA = false;
     }
 
-    private IEnumerator TogglePuzzleBool_MemoryGrid()
+    private IEnumerator TogglePuzzleBool_MemoryGridSubmit()
     {
         enteredMemoryGridSubmit = true;
         yield return new WaitForEndOfFrame();
         enteredMemoryGridSubmit = false;
     }
 
-    private IEnumerator TogglePuzzleBool_MusicPuzzle()
+    private IEnumerator TogglePuzzleBool_MusicPuzzleSubmit()
     {
         enteredMusicPuzzleSubmit = true;
         yield return new WaitForEndOfFrame();
@@ -324,53 +398,6 @@ public class Player : MonoBehaviour
         checksForDoorTrigger = false;
         yield return new WaitForSeconds(0.5f);
         checksForDoorTrigger = true;
-    }
-
-    /// <summary>
-    /// Called when the player enters a door. Moves the previous room behind the Z position that should be used for current rooms.
-    /// </summary>
-    private void OnDoorEnter()
-    {
-        foreach(Room r in currentRooms)
-        {
-            r.transform.position = new Vector3(r.transform.position.x, r.transform.position.y, -5f);
-        }
-
-        if (MusicPuzzle.musicPlayerRoomCoords != null)
-        {
-            if (currentRooms.Contains(MapManager.roomGrid[MusicPuzzle.musicPlayerRoomCoords.Item1][MusicPuzzle.musicPlayerRoomCoords.Item2]))
-            {
-                leftMusicPlayerRoom = true;
-                StartCoroutine(TogglePuzzleBool_MusicPlayerRoomLeave());
-            }
-        }
-
-        previousRoomI = currentRoomI;
-        previousRoomJ = currentRoomJ;
-    }
-
-    /// <summary>
-    /// Called when the player leaves the door (after movementAfterDoor position is applied). Moves the current room to the Z position that should be used for current rooms.
-    /// </summary>
-    private void OnDoorLeave()
-    {
-        UI_Hint.SetHint("");
-
-        SetCurrentRooms();
-        //Debug.Log(currentRooms.Count);
-        foreach (Room r in currentRooms)
-        {
-            r.transform.position = new Vector3(r.transform.position.x, r.transform.position.y, -8f);
-        }
-
-        if (MusicPuzzle.musicPlayerRoomCoords != null)
-        {
-            if (currentRooms.Contains(MapManager.roomGrid[MusicPuzzle.musicPlayerRoomCoords.Item1][MusicPuzzle.musicPlayerRoomCoords.Item2]))
-            {
-                enteredMusicPlayerRoom = true;
-                StartCoroutine(TogglePuzzleBool_MusicPlayerRoom());
-            }
-        }
     }
 
     /// <summary>
