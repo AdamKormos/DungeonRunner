@@ -171,6 +171,7 @@ public class Player : MonoBehaviour
         }
         else if(collision.GetComponent<JigsawPiece>())
         {
+            Jigsaw.forceAppeared = true;
             collectedPieces.Add(collision.GetComponent<JigsawPiece>());
             collision.transform.parent = this.transform;
             collision.transform.localPosition = Vector2.zero;
@@ -396,7 +397,7 @@ public class Player : MonoBehaviour
     private IEnumerator DoorTriggerCheckCooldown()
     {
         checksForDoorTrigger = false;
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.3f);
         checksForDoorTrigger = true;
     }
 

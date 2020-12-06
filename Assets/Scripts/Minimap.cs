@@ -41,8 +41,8 @@ public class Minimap : MonoBehaviour
         int offsetI = Player.currentRoomI - prevI, offsetJ = Player.currentRoomJ - prevJ;
         if(prevI != -1 && prevJ != -1) images[prevI][prevJ].color = Color.white;
         //imageContainerTransform.transform.localPosition += new Vector3(jAmount * -55f, iAmount * 70f);
-        imageContainerTransform.offsetMin += new Vector2(offsetJ * -55f, -offsetI * 70f);
-        imageContainerTransform.offsetMax += new Vector2(offsetJ * -55f, -offsetI * 70f);
+        imageContainerTransform.offsetMin += new Vector2(offsetJ * -55f, -offsetI * 35f);
+        imageContainerTransform.offsetMax += new Vector2(offsetJ * -55f, -offsetI * 35f);
 
         images[prevI + offsetI][prevJ + offsetJ].color = Color.blue;
         images[prevI + offsetI][prevJ + offsetJ].gameObject.SetActive(true);

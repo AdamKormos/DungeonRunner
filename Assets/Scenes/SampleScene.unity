@@ -421,7 +421,7 @@ MonoBehaviour:
     maximumDistanceFromPuzzle: 0
     minimumDistanceFromComponents: 0
     maximumDistanceFromComponents: 0
-  jigsawPieceTransform: {fileID: 0}
+  jigsawPieceTransform: {fileID: 521083796}
 --- !u!212 &305269750
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -2358,9 +2358,13 @@ MonoBehaviour:
     pieces that you have to bring to the empty jigsaw and eventually complete it.
     An instruction will appear after entering a room that has something to do with
     puzzles, but pay attention to the texts, because they are only shown on first
-    entrance.
+    entrance. There is also a minimap in the top right corner that might be useful.
 
-    Good luck, have fun :)
+    Good
+    luck, have fun :)
+
+    PS: A pencil and a paper will come in handy for remembering
+    things :P
 
 
     Press [Enter] to continue'
@@ -3846,7 +3850,7 @@ MonoBehaviour:
   jigsawSpawnDistanceBound:
     min: 3
     max: 0
-  activationDuration: 20
+  activationDuration: 10
 --- !u!4 &2015143889
 Transform:
   m_ObjectHideFlags: 0
@@ -4178,7 +4182,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0.031698227, y: -0.093230784}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -4189,7 +4193,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.7, y: 0.7}
+  m_Size: {x: 1.2705727, y: 1.1102152}
   m_EdgeRadius: 0
 --- !u!61 &2143372973
 BoxCollider2D:

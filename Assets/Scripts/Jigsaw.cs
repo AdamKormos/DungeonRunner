@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,14 +8,40 @@ public class Jigsaw : Puzzle
 {
     bool[] insertedPieces = new bool[4];
     bool gameCompleted = false;
+    public static bool forceAppeared = false;
+    public static Tuple<int, int> gridPos { get; private set; }
+
+    private void Start()
+    {
+        gridPos = MapManager.PositionToGridPosition(transform.position);
+    }
 
     private void OnBecameVisible()
+    {
+        LookForInsert();
+    }
+
+    private void OnBecameInvisible()
+    {
+        forceAppeared = false;
+    }
+
+    private void Update()
+    {
+        if(forceAppeared && gridPos.Item1 == Player.currentRoomI && gridPos.Item2 == Player.currentRoomJ)
+        {
+            LookForInsert();
+            forceAppeared = false;
+        }
+    }
+
+    private void LookForInsert()
     {
         foreach (JigsawPieceHolder jigsawPieceHolder in GetComponentsInChildren<JigsawPieceHolder>(true))
         {
             foreach (JigsawPiece jigsawPiece in Player.collectedPieces)
             {
-                if(jigsawPieceHolder.jigsawPosition == jigsawPiece.jigsawPosition && !insertedPieces[(int)jigsawPiece.jigsawPosition])
+                if (jigsawPieceHolder.jigsawPosition == jigsawPiece.jigsawPosition && !insertedPieces[(int)jigsawPiece.jigsawPosition])
                 {
                     Vector2 distance = jigsawPieceHolder.transform.position - jigsawPiece.transform.position;
 
