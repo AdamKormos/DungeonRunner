@@ -122,7 +122,10 @@ public class LetterPuzzle : Puzzle
 
         foreach (LetterTile letterTile in GetComponentsInChildren<LetterTile>(true))
         {
-            letterTile.GetComponent<Collider2D>().enabled = false; // So that the player can't mess around with the tiles anymore
+            foreach (Collider2D arrowCollider in letterTile.GetComponentsInChildren<Collider2D>(true))
+            {
+                arrowCollider.enabled = false; // So that the player can't mess around with the tiles anymore
+            }
         }
     }
 }

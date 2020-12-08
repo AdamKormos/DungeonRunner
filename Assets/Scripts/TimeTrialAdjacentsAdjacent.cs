@@ -8,13 +8,16 @@ public class TimeTrialAdjacentsAdjacent : Puzzle
     [SerializeField] GameObject sampleDirectionPointerArrowObject = default;
     [SerializeField] Bound jigsawSpawnDistanceBound = default;
     [SerializeField] float activationDuration = 20f;
-    bool isCompleted = false, isTimeTrialGoing = false;
+    bool isCompleted = false, isTimeTrialGoing = false, holdsJigsawPiece = false;
     JigsawPiece jigsawObject;
+    Tuple<int, int> jigsawPieceRoomCoords = default;
 
     // Start is called before the first frame update
     void Start()
     {
-        if (jigsawPieceDict.ContainsKey(this))
+        holdsJigsawPiece = jigsawPieceDict.ContainsKey(this);
+
+        if (holdsJigsawPiece)
         {
             // components[0] = jigsaw piece
             components[0].objectToSpawn.SetActive(isTimeTrialGoing);
@@ -27,6 +30,8 @@ public class TimeTrialAdjacentsAdjacent : Puzzle
             jigsawObject.transform.parent = this.transform;
             jigsawObject.transform.localScale = new Vector3(1f, 1f, 1f);
             jigsawObject.GetComponent<BoxCollider2D>().size = new Vector2(0.6f, 0.6f);
+
+            jigsawPieceRoomCoords = MapManager.PositionToGridPosition(jigsawObject.transform.position);
         }
         else
         {
@@ -38,7 +43,11 @@ public class TimeTrialAdjacentsAdjacent : Puzzle
     // Update is called once per frame
     void Update()
     {
-        if (Player.startedTimeTrialAA || Input.GetKeyDown(KeyCode.Space)) OnPuzzleStarted();
+        if (Player.startedTimeTrialAA && !isCompleted) OnPuzzleStarted();
+        else if(!isCompleted && holdsJigsawPiece && jigsawPieceRoomCoords.Item1 == Player.currentRoomI && jigsawPieceRoomCoords.Item2 == Player.currentRoomJ)
+        {
+            isCompleted = true;
+        }
     }
 
     Room jigsawPieceRoom = default;
@@ -166,6 +175,6 @@ public class TimeTrialAdjacentsAdjacent : Puzzle
 
         yield return new WaitForSeconds(activationDuration);
 
-        jigsawObject.gameObject.SetActive(false);
+        if(!isCompleted) jigsawObject.gameObject.SetActive(false);
     }
 }

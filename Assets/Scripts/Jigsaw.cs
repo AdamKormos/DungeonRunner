@@ -64,16 +64,21 @@ public class Jigsaw : Puzzle
         jigsawPiece.transform.parent = this.transform;
         jigsawPiece.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
         jigsawPiece.GetComponent<SpriteRenderer>().enabled = true;
-        
-        Vector3 distancePerTick = distance / 250f;
-        Vector3 scalePerTick = (new Vector3(1f, 1f) - jigsawPiece.transform.localScale) / 250f;
 
-        for (int i = 0; i < 250; i++)
-        {
-            jigsawPiece.transform.position += distancePerTick;
-            jigsawPiece.transform.localScale += scalePerTick;
-            yield return new WaitForEndOfFrame();
-        }
+        //Vector2 distancePerTick = jigsawPiece.transform.position / 250f;
+        //Vector3 scalePerTick = (new Vector3(1f, 1f) - jigsawPiece.transform.localScale) / 250f;
+
+        //for (int i = 0; i < 250; i++)
+        //{
+        //    jigsawPiece.transform.position -= (Vector3)distancePerTick;
+        //    jigsawPiece.transform.localScale += scalePerTick;
+        //    yield return new WaitForEndOfFrame();
+        //}
+
+        jigsawPiece.transform.position = transform.position;
+        jigsawPiece.transform.position += new Vector3(0, 0, -0.5f);
+        jigsawPiece.transform.localPosition = Vector2.zero;
+        jigsawPiece.transform.localScale += (new Vector3(1f, 1f) - jigsawPiece.transform.localScale);
 
         gameCompleted = insertedPieces[0] && insertedPieces[1] && insertedPieces[2] && insertedPieces[3];
 
@@ -82,6 +87,8 @@ public class Jigsaw : Puzzle
             StartCoroutine(UI_Hint.SetHint("Game completed! Congratulations, I hope you had fun! Press [Enter] to go to the main menu.", 10f));
             StartCoroutine(ListenForEnterToReload());
         }
+
+        yield return new WaitForEndOfFrame();
     }
 
     private IEnumerator ListenForEnterToReload()

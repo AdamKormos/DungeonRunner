@@ -51,7 +51,7 @@ public class ClockPuzzle : Puzzle
             spriteRenderer.sprite = handSprite;
         }
 
-        puzzleActivityHour = Random.Range(0, 12);
+        puzzleActivityHour = Random.Range(1, 13);
         StartCoroutine(TickClock());
         StartCoroutine(SetPuzzleActivity());
     }
@@ -83,7 +83,7 @@ public class ClockPuzzle : Puzzle
             hour++;
             if (hour == 12) hour = 0;
 
-            if (hour == puzzleActivityHour)
+            if (hour+1 == puzzleActivityHour)
             {
                 jigsawObject.gameObject.SetActive(true);
             }

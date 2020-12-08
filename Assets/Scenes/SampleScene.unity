@@ -1588,6 +1588,9 @@ MonoBehaviour:
   sampleTileObject: {fileID: 7517092331399276028, guid: 186885db339160a49a8f1fffad780a0a,
     type: 3}
   jigsawPieceTransform: {fileID: 1489888436}
+  toneAmountToMemorizeBound:
+    min: 3
+    max: 5
   sounds:
   - {fileID: 8300000, guid: 48fe316c800cebf4b8146c2691c72b05, type: 3}
   - {fileID: 8300000, guid: afc62384d09cf7542b0a41051ae98399, type: 3}

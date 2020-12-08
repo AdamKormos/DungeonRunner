@@ -8,6 +8,7 @@ public class MusicPuzzle : Puzzle
 {
     [SerializeField] MusicTile sampleTileObject = default;
     [SerializeField] Transform jigsawPieceTransform = default;
+    [SerializeField] Bound toneAmountToMemorizeBound = default;
     [SerializeField] AudioClip[] sounds = default;
     AudioClip[] solutionList = default;
     static List<AudioClip> playerInputList = default;
@@ -40,7 +41,11 @@ public class MusicPuzzle : Puzzle
     private void Update()
     {
         if (Player.enteredMusicPuzzleSubmit && !isCompleted) OnAnswerSubmitted();
-        else if (Player.enteredMusicPlayerRoom) StartCoroutine(PlaySolution());
+        else if (Player.enteredMusicPlayerRoom)
+        {
+            Debug.Log("Entered music room");
+            StartCoroutine(PlaySolution());
+        }
         else if (Player.leftMusicPlayerRoom)
         {
             stopSolutionPlay = true;
@@ -69,7 +74,7 @@ public class MusicPuzzle : Puzzle
     /// </summary>
     private void CreateSolution()
     {
-        int solutionRange = Random.Range(3, 8);
+        int solutionRange = Random.Range(toneAmountToMemorizeBound.min, toneAmountToMemorizeBound.max + 1);
         solutionList = new AudioClip[solutionRange];
 
         for(int i = 0; i < solutionList.Length; i++)
