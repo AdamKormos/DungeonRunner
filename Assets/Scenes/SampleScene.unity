@@ -2370,7 +2370,7 @@ MonoBehaviour:
     things :P
 
 
-    Press [Enter] to continue'
+    Press [Escape] to exit this panel'
 --- !u!222 &1147659632
 CanvasRenderer:
   m_ObjectHideFlags: 0
